@@ -11,6 +11,7 @@ from xml.etree import ElementTree
 from multiprocessing import Process, Queue
 from datetime import datetime, timedelta
 import nltk
+import pymysql
 
 try:
     from urllib.parse import quote
@@ -23,9 +24,9 @@ except:
     import ciceron_lib
 
 try:
-    from .sentence import Sentence as SentenceCtrl
+    from .sentence import Sentences as SentenceCtrl
 except:
-    from sentence import Sentence as SentenceCtrl
+    from sentence import Sentences as SentenceCtrl
 
 try:
     from .users import Users as UserCtrl
@@ -235,13 +236,12 @@ class Translator(object):
                  , google_result
                  , bing_result
                  , ciceron_result
-                 , tags
                  , memo
 		 , user_id
                  , executed_at
                  )
             VALUES
-                (%s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+                (%s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
         """
         try:
             cursor.execute(query,
@@ -250,7 +250,6 @@ class Translator(object):
 		     google_result,
 		     bing_result,
 		     ciceron_result,
-                     tags,
                      memo,
 		     user_id, 
 		     )
@@ -268,12 +267,12 @@ class Translator(object):
         query = """
             SELECT 
                 id
-              , original_contributor_id
+              , origin_contributor_id
               , target_contributor_id
               , origin_text
               , target_text
               , added_at
-            FROM complete_sentence
+            FROM complete_sentence_users
             WHERE
                   origin_lang = %s
               AND target_lang = %s
@@ -284,16 +283,14 @@ class Translator(object):
         if ret is None or len(ret) < 1:
             return False, None, None, None, None, None
 
-        original_contributor_id = ret['original_contributor_id']
+        original_contributor_id = ret['origin_contributor_id']
         target_contributor_id = ret['target_contributor_id']
         origin_text = ret['origin_text']
         target_text = ret['target_text']
         added_at = ret['added_at']
         complete_sentence_id = ret['id']
 
-        return True, origin_contributor_id, target_contributor_id
-                   , origin_text, translated_text
-                   , added_at, complete_sentence_id
+        return True, original_contributor_id, target_contributor_id, origin_text, target_text, added_at, complete_sentence_id
 
     def increaseCallCnt(self, conn, user_id):
         cursor = conn.cursor()
@@ -331,7 +328,7 @@ class Translator(object):
         conn.commit()
         return True
 
-    def writeActionLog(self, user_id, object_user_id,
+    def writeActionLog(self, conn, user_id, object_user_id,
                        origin_lang, target_lang,
                        action_name, sentence_amount, point_amount):
         cursor = conn.cursor()
@@ -377,9 +374,9 @@ class Translator(object):
             FROM action_log_users
             ORDER BY executed_at DESC
             LIMIT 20
-            OFFSET 20 * (%s -1)
+            OFFSET %s
         """
-        cursor.execute(query, (page, ))
+        cursor.execute(query, ( 20 * (page-1), ))
         return cursor.fetchall()
 
     def viewCompleteTranslation(self, conn, page=1):
@@ -387,11 +384,11 @@ class Translator(object):
         query = """
             SELECT *
             FROM complete_sentence_users
-            ORDER BY executed_at DESC
+            ORDER BY added_at DESC
             LIMIT 20
-            OFFSET 20 * (%s -1)
-        """
-        cursor.execute(query, (page, ))
+            OFFSET %s
+        """.format(page)
+        cursor.execute(query, ( 20 * (page-1), ))
         return cursor.fetchall()
 
     def doWorkWithExternal(self, conn, source_lang, target_lang, sentences, user_id, where_contributed=None, order_user=None, media=None, memo="", tags=""):
@@ -412,14 +409,14 @@ class Translator(object):
         #   4. API call cnt
         
         userCtrl = UserCtrl()
-        ret = userCtrl._getId(media, order_user)
+        ret = userCtrl._getId(conn, media, order_user)
         order_user_id = 0
         if ret is None or len(ret) < 1:
             order_user_id = 0
         else:
             order_user_id = ret['id']
 
-        splitted_sentence = self.tokenizers(sentences)
+        splitted_sentence = self.sentence_detector.tokenize(sentences)
         searched_sentences = []
 
         for idx, sentence in enumerate(splitted_sentence):
@@ -437,21 +434,21 @@ class Translator(object):
                 dat = {"seq": idx, "data": ret}
                 searched_sentences.append(dat)
                 is_ok = self.increaseSearchCnt(conn, ret[6])
-                is_ok = self.writeActionLog(order_user_id, ret[2], source_lang, target_lang, 'refer', 1, 0)
+                is_ok = self.writeActionLog(conn, order_user_id, ret[2], source_lang, target_lang, 'refer', 1, 0)
 
             else:
                 sentenceCtrlObj = SentenceCtrl()
                 is_ok, original_sentence_id = sentenceCtrlObj._inputOriginalSentence(conn, order_user_id, source_lang, sentence, where_contributed, tags)
-                is_ok = self.writeActionLog(order_user_id, ret[2], source_lang, target_lang, 'origin_contribute', 1, 0)
+                is_ok = self.writeActionLog(conn, order_user_id, ret[2], source_lang, target_lang, 'origin_contribute', 1, 0)
 
         is_ok, result = self.doWorkSingle(source_lang, target_lang, sentences)
 
         splitted_translated_sentence = []
         if (source_lang == 'ko' and target_lang == 'en') or (source_lang == 'en' and target_lang == 'ko'):
-            splitted_translated_sentence = self.tokenizers(result.get('ciceron'))
+            splitted_translated_sentence = self.sentence_detector.tokenize(result.get('ciceron'))
 
         else:
-            splitted_translated_sentence = self.tokenizers(result.get('google'))
+            splitted_translated_sentence = self.sentence_detector.tokenize(result.get('google'))
 
         for item in searched_sentences:
             splitted_translated_sentence[ item['seq'] ] = item['data'][4]

@@ -54,7 +54,7 @@ class Users(object):
         else:
             return {
                     "is_new": False
-                  , "user_id": ret['user_id']
+                  , "user_id": ret['id']
                   , "eos_id": ret['eos_id']
                   , "media": ret['media']
                   , "text_id": ret['text_id']
@@ -66,7 +66,7 @@ class Users(object):
         cursor = conn.cursor()
         query = """
             UPDATE users
-            SET point = point + %
+            SET point = point + %s
             WHERE media = %s AND text_id = %s
         """
         try:
@@ -80,7 +80,7 @@ class Users(object):
         return True
 
 
-    def setLangauge(self, conn, media, text_id, languages):
+    def setLanguage(self, conn, media, text_id, languages):
         cursor = conn.cursor()
         query = """
             UPDATE users

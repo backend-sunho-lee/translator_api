@@ -1,4 +1,5 @@
 import traceback
+import pymysql
 
 class Sentences(object):
     def _getOriginSentenceInfo(self, conn, origin_text_id):
@@ -49,10 +50,14 @@ class Sentences(object):
         """
         try:
             cursor.execute(query, (contributor_id, language, text, tags, text, where_contributed, ))
+
+        except pymysql.err.IntegrityError:
+            print("Duplicate sentence {}".format(text))
+
         except:
             traceback.print_exc()
             conn.rollback()
-            return False
+            return False, None
 
         conn.commit()
 
@@ -68,13 +73,13 @@ class Sentences(object):
             text, where_contributed, tags=""):
         cursor = conn.cursor()
         query = """
-            INSERT INTO target_texts
+            INSERT INTO target_text
               (contributor_id, 
               origin_text_id, 
               language,
               text, 
               confirm_cnt,
-              tag, 
+              tags, 
               contributed_at, 
               where_contributed)
 
@@ -90,6 +95,9 @@ class Sentences(object):
         """
         try:
             cursor.execute(query, (contributor_id, original_text_id, language, text, tags, where_contributed, ))
+        except pymysql.err.IntegrityError:
+            print("Duplicate sentence {}".format(text))
+
         except:
             traceback.print_exc()
             conn.rollback()
@@ -109,7 +117,6 @@ class Sentences(object):
             origin_text_id, target_text_id, 
             origin_contributor_id, target_contributor_id, 
             origin_lang, target_lang,
-            hash_origin, hash_target,
             origin_text, target_text,
             origin_tags, target_tags,
             origin_where_contributed, target_where_contributed):
@@ -145,10 +152,13 @@ class Sentences(object):
                 origin_tags, target_tags,
                 origin_where_contributed, target_where_contributed, ))
 
+        except pymysql.err.IntegrityError:
+            print("Duplicate sentence {}".format(target_text))
+
         except:
             traceback.print_exc()
             conn.rollback()
-            return False
+            return False, None
 
         conn.commit()
 
@@ -160,7 +170,7 @@ class Sentences(object):
 
         return True, ret['last_id']
 
-    def _markAsTranslated(self, origin_text_id):
+    def _markAsTranslated(self, conn, origin_text_id):
         cursor = conn.cursor()
         query = """
             UPDATE origin_texts
@@ -185,22 +195,22 @@ class Sentences(object):
         query = """
             SELECT * FROM origin_text_users
             WHERE is_translated = false
-              AND language IN (%s)
+              AND language IN ({})
             LIMIT 1
-        """
-        cursor.execute(query, (organized_languages, ))
+        """.format(organized_languages)
+        cursor.execute(query)
         return cursor.fetchone()
 
     def inputTranslation(self, conn,
             original_text_id,
             target_contributor_id, target_text, target_lang,
-            where_contribute
+            where_contribute,
             tags=""):
         is_ok, target_text_id = self._inputTargetSentence(conn, target_contributor_id, original_text_id, target_lang, target_text, where_contribute, tags)
 
-        ret = self._getOriginSentenceInfo(origin_text_id)
+        ret = self._getOriginSentenceInfo(conn, original_text_id)
         if ret is None or len(ret) < 1:
-            return False
+            return False, None, None, None, None, None
 
         original_contributor_id = ret['contributor_id']
         original_contributor_media = ret['contributor_media']
@@ -208,17 +218,17 @@ class Sentences(object):
         origin_lang = ret['language']
         origin_text = ret['text']
         origin_tag = ret['tag']
-        origin_where_contributed = ret['where_contribute']
+        origin_where_contributed = ret['where_contributed']
 
-        is_ok = self._markAsTranslated(original_text_id)
+        is_ok = self._markAsTranslated(conn, original_text_id)
 
         is_ok, complete_id = self._inputCompleteSentence(conn,
-                origin_text_id, target_text_id,
-                origin_contributor_id, target_contributor_id,
+                original_text_id, target_text_id,
+                original_contributor_id, target_contributor_id,
                 origin_lang, target_lang,
                 origin_text, target_text,
                 origin_tag, tags,
                 origin_where_contributed, where_contribute)
 
-        return True, complete_id, origin_contributor_id, original_contributor_media, original_contributor_text_id, origin_lang
+        return True, complete_id, original_contributor_id, original_contributor_media, original_contributor_text_id, origin_lang
 

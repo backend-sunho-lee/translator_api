@@ -27,9 +27,9 @@ except:
     from .users import Users
 
 try:
-    from sentence import Sentence
+    from sentence import Sentences
 except:
-    from .sentence import Sentence
+    from .sentence import Sentences
 
 
 
@@ -58,7 +58,7 @@ cors = CORS(app, resources={r"/*": {"origins": "*", "supports_credentials": "tru
 translator = Translator(GCM_API_KEY, BING_KEY)
 
 def connect_db():
-    return pymysql.connect(**DATABASE)
+    return pymysql.connect(host=DATABASE['host'], user=DATABASE['user'], password=DATABASE['password'], db=DATABASE['db'], charset='utf8', cursorclass=pymysql.cursors.DictCursor)
 
 @app.before_request
 def before_request():
@@ -114,13 +114,12 @@ def translate():
 
     else:
         source_lang = get_lang_id(source_lang_id)
-            target_lang = get_lang_id(target_lang_id)
-            recorder.write(source_lang, target_lang, sentence,
+        target_lang = get_lang_id(target_lang_id)
+        recorder.write(source_lang, target_lang, sentence,
                     result.get('google'),
                     result.get('bing'),
                     result.get('ciceron'),
                     memo=memo)
-                    None)
         return make_response(json.jsonify(**result), 200)
 
 
@@ -132,7 +131,7 @@ def translateInternal():
     if auth_key is None or auth_key == "":
         return make_response('No Auth Key', 503)
 
-    user_id, is_internal = ciceron_lib.getApiKeyFromUser(g.db, auth_key)
+    user_id, is_internal = ciceron_lib.getApiKeyFromUser(conn, auth_key)
     if user_id == -1 or is_internal == False:
         return make_response('Not Authorized', 403)
 
@@ -167,7 +166,7 @@ def translateExternal():
     if auth_key is None or auth_key == "":
         return make_response('No Auth Key', 503)
 
-    user_id, is_internal = ciceron_lib.getApiKeyFromUser(g.db, auth_key)
+    user_id, is_internal = ciceron_lib.getApiKeyFromUser(conn, auth_key)
     if user_id == -1:
         return make_response('Not Authorized', 403)
 
@@ -224,8 +223,10 @@ def getSentence():
 
     languages = request.args.get('languages', 'ko,en')
 
-    sentenceObj = Sentence()
+    sentenceObj = Sentences()
     ret = sentenceObj.getOneSentences( conn, languages )
+    ret = ret if ret is not None else {}
+
     return make_response(json.jsonify(
         origin_text_id=ret.get('id'),
         contributor_media=ret.get('contributor_media'),
@@ -243,35 +244,34 @@ def inputTranslation():
     contributor_media = request.form['contributor_media']
     contributor_text_id = request.form['contributor_text_id']
     target_lang = request.form['target_lang']
-    target_text = reqeust.form['target_text']
+    target_text = request.form['target_text']
 
     tags = request.form.get('tags')
     where_contribute = request.form.get('where_contribute')
 
-    sentenceObj = Sentence()
+    sentenceObj = Sentences()
     userObj = Users()
-    translatorObj = Translator()
 
     contributor_user_id_obj = userObj._getId(conn, contributor_media, contributor_text_id)
     if contributor_user_id_obj is None or len(contributor_user_id_obj) < 1:
         return make_response(json.jsonify(result="fail"), 410)
 
     contributor_id = contributor_user_id_obj['id']
-    is_ok, complete_id, origin_contributor_id, original_contributor_media, original_contributor_text_id, origin_lang = sentenceObj.inputTranslation(conn, original_text_id, contributor_id, original_text_id, target_lang, target_text, where_contribute, tags)
+    is_ok, complete_id, origin_contributor_id, original_contributor_media, original_contributor_text_id, origin_lang = sentenceObj.inputTranslation(conn, original_text_id, contributor_id, target_text, target_lang, where_contribute, tags)
 
     if origin_contributor_id == 0:
         is_ok = userObj.getPoint(conn, contributor_media, contributor_text_id, 2)
-        is_ok = translatorObj.writeActionLog(contributor_id, None, origin_lang, target_lang, 'origin_contribute', 1, 0)
-        is_ok = translatorObj.writeActionLog(contributor_id, None, origin_lang, target_lang, 'target_contribute', 1, 0)
-        is_ok = translatorObj.writeActionLog(contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
-        is_ok = translatorObj.writeActionLog(contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
+        is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'origin_contribute', 1, 0)
+        is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'target_contribute', 1, 0)
+        is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
+        is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
 
     else:
         is_ok = userObj.getPoint(conn, original_contributor_media, original_contributor_text_id, 1)
         is_ok = userObj.getPoint(conn, contributor_media, contributor_text_id, 1)
-        is_ok = translatorObj.writeActionLog(contributor_id, None, origin_lang, target_lang, 'target_contribute', 1, 0)
-        is_ok = translatorObj.writeActionLog(origin_contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
-        is_ok = translatorObj.writeActionLog(contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
+        is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'target_contribute', 1, 0)
+        is_ok = translator.writeActionLog(conn, origin_contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
+        is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
 
 
     return make_response(json.jsonify(result="ok"), 200)

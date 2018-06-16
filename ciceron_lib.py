@@ -9,7 +9,7 @@ def getApiKeyFromUser(conn, apiKey):
     query = """
         SELECT user_id, is_internal FROM
         auth_key
-        WHERE key = %s
+        WHERE api_key = %s
     """
     cursor.execute(query, (apiKey, ))
     ret = cursor.fetchone()
