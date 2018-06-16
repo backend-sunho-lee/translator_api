@@ -10,6 +10,7 @@ import json
 from xml.etree import ElementTree
 from multiprocessing import Process, Queue
 from datetime import datetime, timedelta
+import nltk
 
 try:
     from urllib.parse import quote
@@ -29,6 +30,7 @@ class Translator(object):
         self.bing_key = bing_key
         self.ciceronAPI_koen = "http://brutus.ciceron.xyz:5000/translate"
         self.ciceronAPI_enko = "http://cicero.ciceron.xyz:5000/translate"
+        self.sentence_detector = nltk.data.load('tokenizers/punkt/english.pickle')
 
 
     def getLangCode(self, platform, lang_code):
@@ -211,7 +213,7 @@ class Translator(object):
                        , 'papago': None
                      }
 
-    def recordToDb(self, conn, source_lang, target_lang, sentences
+    def recordToTranslationLog(self, conn, source_lang, target_lang, sentences
                  , google_result, bing_result, ciceron_result, memo, tags, user_id):
 
         cursor = conn.cursor()
@@ -246,17 +248,217 @@ class Translator(object):
         except:
             traceback.print_exc()
             conn.rollback()
-            conn.close()
             return False
 
         conn.commit()
         return True
 
+    def findTranslation(self, conn, origin_lang, target_lang, origin_text):
+        cursor = conn.cursor()
+        query = """
+            SELECT 
+                original_contributor_id
+              , target_contributor_id
+              , origin_text
+              , target_text
+              , added_at
+            FROM complete_sentence
+            WHERE
+                  origin_lang = %s
+              AND target_lang = %s
+              AND hash_origin = MD5(%s)
+        """
+        cursor.execute(query, (origin_lang, target_lang, origin_text, ))
+        ret = cursor.fetchone()
+        if ret is None or len(ret) < 1:
+            return False, None, None, None, None, None
+
+        original_contributor_id = ret['original_contributor_id']
+        target_contributor_id = ret['target_contributor_id']
+        origin_text = ret['origin_text']
+        target_text = ret['target_text']
+        added_at = ret['added_at']
+
+        return True, origin_contributor_id, target_contributor_id
+                   , origin_text, translated_text
+                   , added_at
+
+    def increaseCallCnt(self, conn, user_id):
+        cursor = conn.cursor()
+        query = """
+            UPDATE auth_key
+              set cnt = cnt + 1
+            WHERE
+              user_id = %s
+        """
+        try:
+            cursor.execute(query, (user_id, ))
+        except:
+            traceback.print_exc()
+            conn.rollback()
+            return False
+
+        conn.commit()
+        return True
+
+    def inputOriginText(self, conn, user_id, origin_lang, text, tags=""):
+        cursor = conn.cursor()
+        query = """
+            INSERT INTO origin_texts
+              (contributor_id, language, text, count, tag, contributed_at, text_hash, where_contributed, is_translated)
+            VALUES
+              (%s,             %s,       %s,   0,     %s,  CURRENT_TIMESTAMP, MD5(%s), %s, false)
+        """
+        sentences_array = self.sentence_detector.tokenize(text)
+        for sentence in sentences_array:
+            try:
+                cursor.execute(query, (user_id, origin_lang, sentence, tag, sentence, where_contributed, ))
+
+            except pymysql.IntegrityError:
+                print("Duplicated text {}".format(text))
+                continue
+
+            except:
+                traceback.print_exc()
+                conn.rollback()
+                return False
+
+        conn.commit()
+        return True
+
+    def inputTargetText(self, conn, user_id, origin_text_id, origin_lang, text, where_contributed):
+        cursor = conn.cursor()
+        query = """
+            INSERT INTO target_texts
+              (contributor_id, origin_text_id, language, text, confirm_cnt, where_contributed, contributed_at)
+            VALUES
+              (%s,             %s,             %s,       %s,   0,           %s, CURRENT_TIMESTAMP)
+        """
+        try:
+            cursor.execute(query, (user_id, origin_text_id, origin_lang, text, where_contributed, ))
+
+        except pymysql.IntegrityError:
+            print("Duplicated text {}".format(text))
+            continue
+
+        except:
+            traceback.print_exc()
+            conn.rollback()
+            return False
+
+        conn.commit()
+        return True
+
+    def inputCompleteSentence(self, conn, 
+            origin_contributor_id, target_contributor_id,
+            origin_lang, target_lang,
+            origin_text, target_text,
+            input_tags="", target_tags="", origin_where_contributed="", target_where_contributed=""):
+        cursor = conn.cursor()
+        query = """
+            INSERT INTO complete_sentence
+              (   origin_contributor_id
+                , target_contrbutor_id
+                , origin_lang
+                , target_lang
+                , hash_origin
+                , hash_target
+                , origin_text
+                , target_text
+                , origin_tags
+                , target_tags
+                , origin_where_contributed
+                , target_where_contributed
+                , added_at
+              )
+            VALUES
+              (   %s
+                , %s
+                , %s
+                , %s
+                , MD5(%s)
+                , MD5(%s)
+                , %s
+                , %s
+                , %s
+                , CURRENT_TIMESTAMP
+              )
+        """
+        try:
+            cursor.execute(query, (origin_contributor_id, target_contributor_id,
+                                   origin_lang, target_lang,
+                                   origin_text, target_text, 
+                                   input_tags, target_tags,
+                                   origin_where_contributed, target_where_contributed, ))
+
+        except pymysql.IntegrityError:
+            print("Duplicated text {}".format(text))
+            continue
+
+        except:
+            traceback.print_exc()
+            conn.rollback()
+            return False
+
+        conn.commit()
+        return True
+
+    def writeActionLog(self, user_id, object_user_id,
+                       origin_lang, target_lang,
+                       action_name, sentence_amount, point_amount):
+        cursor = conn.cursor()
+        query = """
+            INSERT INTO action_log
+              (   executed_at
+                , user_id
+                , object_user_id
+                , origin_lang
+                , target_lang
+                , action_name
+                , sentence_amount
+                , point_amount
+              )
+            VALUES
+              (   CURRENT_TIMESTAMP
+                , %s
+                , %s
+                , %s
+                , %s
+                , %s
+                , %s
+                , %s
+              )
+        """
+        try:
+            cursor.execute(query, (user_id, object_user_id,
+                                   origin_lang, target_lang,
+                                   action_name, sentence_amount, point_amount, ))
+
+        except:
+            traceback.print_exc()
+            conn.rollback()
+            return False
+
+        conn.commit()
+        return True
+
+    def viewActionLog(self, conn, page=1):
+        cursor = conn.cursor()
+        query = """
+            SELECT *
+            FROM action_log_users
+            ORDER BY executed_at DESC
+            LIMIT 20
+            OFFSET 20 * (%s -1)
+        """
+        cursor.execute(query, (page, ))
+        return cursor.fetchall()
+
     def doWorkWithExternal(self, conn, source_lang, target_lang, sentences, user_id, memo="", tags=""):
         
         #is_ok, result = self.doWork(source_lang_id, target_lang_id, sentences)
         is_ok, result = self.doWorkSingle(source_lang, target_lang, sentences)
-        is_ok = self.recordToDb(
+        is_ok = self.recordToTranslationLog(
                     conn, source_lang, target_lang, sentences,
                     result.get('google'), result.get('bing'), result.get('ciceron'),
                     memo, tags, user_id

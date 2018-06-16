@@ -70,6 +70,48 @@ def teardown_request(exception):
 def index():
     return render_template('layout.html', translateText=None)
 
+# Legacy
+@app.route('/translate', methods=['POST'])
+def translate():
+    conn = connect_db()
+    recorder = VoteTranslationResult(conn)
+
+    client_ip = request.environ.get('REMOTE_ADDR')
+    #if client_ip not in ['52.196.144.144', '121.128.220.114']:
+    #    return make_response(json.jsonify(
+    #        message='Unauthorized'), 401)
+
+    #parameters = ciceron_lib.parse_request(request)
+    user_email = request.form['user_email']
+    sentence = request.form['sentence']
+    source_lang_id = request.form['source_lang_id']
+    target_lang_id = request.form['target_lang_id']
+    memo = request.form.get('memo')
+
+    if source_lang_id is not None:
+        source_lang_id = int(source_lang_id)
+
+    if target_lang_id is not None:
+        target_lang_id = int(target_lang_id)
+
+    is_ok, result = translator.doWorkSingle(source_lang_id, target_lang_id, sentence)
+
+    if is_ok == False:
+        return make_response(json.jsonify(
+            message=""), 400)
+
+    else:
+        source_lang = get_lang_id(source_lang_id)
+            target_lang = get_lang_id(target_lang_id)
+            recorder.write(source_lang, target_lang, sentence,
+                    result.get('google'),
+                    result.get('bing'),
+                    result.get('ciceron'),
+                    memo=memo)
+                    None)
+        return make_response(json.jsonify(**result), 200)
+
+
 @app.route('/api/v2/internal/translate', methods=['POST'])
 def translateInternal():
     conn = connect_db()
@@ -175,7 +217,7 @@ if __name__ == "__main__":
     #context.load_cert_chain(cert, key)
 
     #http_server = WSGIServer(('0.0.0.0', 443), app, ssl_context=context)
-    http_server = WSGIServer(('0.0.0.0', 80), app)
+    http_server = WSGIServer(('0.0.0.0', 5000), app)
     http_server.serve_forever()
     # Should be masked!
     #app.run(host="0.0.0.0", port=80)
