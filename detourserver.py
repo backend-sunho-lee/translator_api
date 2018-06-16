@@ -21,6 +21,18 @@ try:
 except:
     from .translator import Translator
 
+try:
+    from users import Users
+except:
+    from .users import Users
+
+try:
+    from sentence import Sentence
+except:
+    from .sentence import Sentence
+
+
+
 conf = {}
 with open('config.json', 'r') as f:
     conf = pyjson.load(f)
@@ -130,10 +142,13 @@ def translateInternal():
     source_lang = request.form['source_lang']
     target_lang = request.form['target_lang']
     tags = request.form.get('tag', "")
+    order_user = request.form.get("order_user")
+    media = request.form.get("media")
+    where_contributed = request.form.get("where_contributed")
     memo = request.form.get('memo', "")
 
     # Real work
-    is_ok, result = translator.doWorkWithExternal(conn, source_lang, target_lang, sentence, user_id, tags, memo)
+    is_ok, result = translator.doWorkWithExternal(conn, source_lang, target_lang, sentence, user_id, where_contributed=where_contributed, order_user=order_user, media=media, tags=tags, memo=memo)
 
     if is_ok == True:
         return make_response(json.jsonify(**result), 200)
@@ -163,10 +178,13 @@ def translateExternal():
     source_lang = request.form['source_lang']
     target_lang = request.form['target_lang']
     tags = request.form.get('tag', "")
+    order_user = request.form.get("order_user")
+    media = request.form.get("media")
+    where_contributed = request.form.get("where_contributed")
     memo = request.form.get('memo', "")
 
     # Real work
-    is_ok, result = translator.doWorkWithExternal(conn, source_lang, target_lang, sentence, user_id, tags, memo)
+    is_ok, result = translator.doWorkWithExternal(conn, source_lang, target_lang, sentence, user_id, where_contributed=where_contributed, order_user=order_user, media=media, tags=tags, memo=memo)
 
     if is_ok == True:
         return make_response(json.jsonify(result=result.get('ciceron')), 200)
@@ -174,6 +192,30 @@ def translateExternal():
     else:
         return make_response(json.jsonify(
             message=""), 400)
+
+@app.route('/api/v1/getId', methods=['POST'])
+def getId():
+    conn = connect_db()
+
+    media = request.form['media']
+    text_id = request.form['text_id']
+
+    userObj = Users()
+    ret = userObj.getId(conn, media, text_id)
+    return make_response(json.jsonify(**ret), 200)
+
+@app.route('/api/v1/setLanguage', methods=['POST'])
+def setLanguage():
+    conn = connect_db()
+
+    user_id = request.form['user_id']
+    languages = request.form['languages']
+    userObj = Users()
+    is_ok = userObj.setLanguage( int(user_id), languages )
+    if is_ok == True:
+        return make_response(json.jsonify(result="ok"), 200)
+    else:
+        return make_response(json.jsonify(result="fail"), 410)
 
 @app.route('/api/v2/external/telegram/<auth_key>/webhook', methods=['POST'])
 def webHook(auth_key):

@@ -62,18 +62,16 @@ class Users(object):
                   , "point": ret['point']
                     }
 
-    def setLangauge(self, conn, media, text_id, languages):
+    def setLangauge(self, conn, user_id, languages):
         cursor = conn.cursor()
         query = """
             UPDATE users
               SET languages = %s
-            WHERE
-                  media = %s
-              AND text_id = %s
+            WHERE id = %s
         """
         
         try:
-            cursor.execute(query, (languages, media, text_id, ))
+            cursor.execute(query, (languages, user_id, ))
         except:
             traceback.print_exc()
             conn.rollback()

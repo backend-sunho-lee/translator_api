@@ -22,6 +22,16 @@ try:
 except:
     import ciceron_lib
 
+try:
+    from .sentence import Sentence as SentenceCtrl
+except:
+    from sentence import Sentence as SentenceCtrl
+
+try:
+    from .users import Users as UserCtrl
+except:
+    from users import Users as UserCtrl
+
 
 class Translator(object):
     def __init__(self, google_key, bing_key):
@@ -218,7 +228,7 @@ class Translator(object):
 
         cursor = conn.cursor()
         query = """
-            INSERT INTO F_TRANSLATOR_RESULT
+            INSERT INTO translation_log
                 (  source_lang
                  , target_lang
                  , original_text
@@ -257,7 +267,8 @@ class Translator(object):
         cursor = conn.cursor()
         query = """
             SELECT 
-                original_contributor_id
+                id
+              , original_contributor_id
               , target_contributor_id
               , origin_text
               , target_text
@@ -278,10 +289,11 @@ class Translator(object):
         origin_text = ret['origin_text']
         target_text = ret['target_text']
         added_at = ret['added_at']
+        complete_sentence_id = ret['id']
 
         return True, origin_contributor_id, target_contributor_id
                    , origin_text, translated_text
-                   , added_at
+                   , added_at, complete_sentence_id
 
     def increaseCallCnt(self, conn, user_id):
         cursor = conn.cursor()
@@ -301,100 +313,16 @@ class Translator(object):
         conn.commit()
         return True
 
-    def inputOriginText(self, conn, user_id, origin_lang, text, tags=""):
+    def increaseSearchCnt(self, conn, complete_sentence_id):
         cursor = conn.cursor()
         query = """
-            INSERT INTO origin_texts
-              (contributor_id, language, text, count, tag, contributed_at, text_hash, where_contributed, is_translated)
-            VALUES
-              (%s,             %s,       %s,   0,     %s,  CURRENT_TIMESTAMP, MD5(%s), %s, false)
-        """
-        sentences_array = self.sentence_detector.tokenize(text)
-        for sentence in sentences_array:
-            try:
-                cursor.execute(query, (user_id, origin_lang, sentence, tag, sentence, where_contributed, ))
-
-            except pymysql.IntegrityError:
-                print("Duplicated text {}".format(text))
-                continue
-
-            except:
-                traceback.print_exc()
-                conn.rollback()
-                return False
-
-        conn.commit()
-        return True
-
-    def inputTargetText(self, conn, user_id, origin_text_id, origin_lang, text, where_contributed):
-        cursor = conn.cursor()
-        query = """
-            INSERT INTO target_texts
-              (contributor_id, origin_text_id, language, text, confirm_cnt, where_contributed, contributed_at)
-            VALUES
-              (%s,             %s,             %s,       %s,   0,           %s, CURRENT_TIMESTAMP)
+            UPDATE complete_sentence
+              set cnt = cnt + 1
+            WHERE
+              id = %s
         """
         try:
-            cursor.execute(query, (user_id, origin_text_id, origin_lang, text, where_contributed, ))
-
-        except pymysql.IntegrityError:
-            print("Duplicated text {}".format(text))
-            continue
-
-        except:
-            traceback.print_exc()
-            conn.rollback()
-            return False
-
-        conn.commit()
-        return True
-
-    def inputCompleteSentence(self, conn, 
-            origin_contributor_id, target_contributor_id,
-            origin_lang, target_lang,
-            origin_text, target_text,
-            input_tags="", target_tags="", origin_where_contributed="", target_where_contributed=""):
-        cursor = conn.cursor()
-        query = """
-            INSERT INTO complete_sentence
-              (   origin_contributor_id
-                , target_contrbutor_id
-                , origin_lang
-                , target_lang
-                , hash_origin
-                , hash_target
-                , origin_text
-                , target_text
-                , origin_tags
-                , target_tags
-                , origin_where_contributed
-                , target_where_contributed
-                , added_at
-              )
-            VALUES
-              (   %s
-                , %s
-                , %s
-                , %s
-                , MD5(%s)
-                , MD5(%s)
-                , %s
-                , %s
-                , %s
-                , CURRENT_TIMESTAMP
-              )
-        """
-        try:
-            cursor.execute(query, (origin_contributor_id, target_contributor_id,
-                                   origin_lang, target_lang,
-                                   origin_text, target_text, 
-                                   input_tags, target_tags,
-                                   origin_where_contributed, target_where_contributed, ))
-
-        except pymysql.IntegrityError:
-            print("Duplicated text {}".format(text))
-            continue
-
+            cursor.execute(query, (complete_sentence_id, ))
         except:
             traceback.print_exc()
             conn.rollback()
@@ -454,15 +382,92 @@ class Translator(object):
         cursor.execute(query, (page, ))
         return cursor.fetchall()
 
-    def doWorkWithExternal(self, conn, source_lang, target_lang, sentences, user_id, memo="", tags=""):
+    def viewCompleteTranslation(self, conn, page=1):
+        cursor = conn.cursor()
+        query = """
+            SELECT *
+            FROM complete_sentence_users
+            ORDER BY executed_at DESC
+            LIMIT 20
+            OFFSET 20 * (%s -1)
+        """
+        cursor.execute(query, (page, ))
+        return cursor.fetchall()
+
+    def doWorkWithExternal(self, conn, source_lang, target_lang, sentences, user_id, where_contributed=None, order_user=None, media=None, memo="", tags=""):
         
         #is_ok, result = self.doWork(source_lang_id, target_lang_id, sentences)
+
+        # 상용구를 찾는다
+        # 상용구가 있으면
+        #   1. complete_sentence  카운트 올린다
+        #   2. Action에 기록한다
+        #   3. translation_log에 상용구 데이터 찾았다는 표시와 함께 기록한다.
+        #   4. API call cnt
+
+        # 상용구가 없으면
+        #   1. original_text에 등록한다
+        #.  2. Action에 기록한다
+        #.  3. translation_log에 기록한다.
+        #   4. API call cnt
+        
+        userCtrl = UserCtrl()
+        ret = userCtrl._getId(media, order_user)
+        order_user_id = 0
+        if ret is None or len(ret) < 1:
+            order_user_id = 0
+        else:
+            order_user_id = ret['id']
+
+        splitted_sentence = self.tokenizers(sentences)
+        searched_sentences = []
+
+        for idx, sentence in enumerate(splitted_sentence):
+            ret = self.findTranslation(conn, source_lang, target_lang, sentence)
+
+            # 0: True, 
+            # 1: origin_contributor_id
+            # 2: target_contributor_id
+            # 3: origin_text
+            # 4: translated_text
+            # 5: added_at
+            # 6: complete_sentence_id
+
+            if ret[0] == True: # is_ok
+                dat = {"seq": idx, "data": ret}
+                searched_sentences.append(dat)
+                is_ok = self.increaseSearchCnt(conn, ret[6])
+                is_ok = self.writeActionLog(order_user_id, ret[2], source_lang, target_lang, 'refer', 1, 0)
+
+            else:
+                sentenceCtrlObj = SentenceCtrl()
+                is_ok, original_sentence_id = sentenceCtrlObj._inputOriginalSentence(conn, order_user_id, source_lang, sentence, where_contributed, tags)
+
         is_ok, result = self.doWorkSingle(source_lang, target_lang, sentences)
+
+        splitted_translated_sentence = []
+        if (source_lang == 'ko' and target_lang == 'en') or (source_lang == 'en' and target_lang == 'ko'):
+            splitted_translated_sentence = self.tokenizers(result.get('ciceron'))
+
+        else:
+            splitted_translated_sentence = self.tokenizers(result.get('google'))
+
+        for item in searched_sentences:
+            splitted_translated_sentence[ item['seq'] ] = item['data'][4]
+
+        if (source_lang == 'ko' and target_lang == 'en') or (source_lang == 'en' and target_lang == 'ko'):
+            result['ciceron'] = ' '.join(splitted_translated_sentence)
+
+        else:
+            result['google'] = ' '.join(splitted_translated_sentence)
+
         is_ok = self.recordToTranslationLog(
                     conn, source_lang, target_lang, sentences,
                     result.get('google'), result.get('bing'), result.get('ciceron'),
                     memo, tags, user_id
                 )
+
+        is_ok = self.increaseCallCnt(conn, user_id)
 
         return is_ok, result
 

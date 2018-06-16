@@ -208,6 +208,8 @@ class Sentences(object):
         origin_tag = ret['tag']
         origin_where_contributed = ret['where_contribute']
 
+        is_ok = self._markAsTranslated(original_text_id)
+
         is_ok, complete_id = self._inputCompleteSentence(conn,
                 origin_text_id, target_text_id,
                 origin_contributor_id, target_contributor_id,
@@ -217,3 +219,4 @@ class Sentences(object):
                 origin_where_contributed, where_contribute)
 
         return True, complete_id
+
