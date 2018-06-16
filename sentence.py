@@ -4,7 +4,7 @@ class Sentences(object):
     def _getOriginSentenceInfo(self, conn, origin_text_id):
         cursor = conn.cursor()
         query = """
-            SELECT * FROM origin_texts
+            SELECT * FROM origin_text_users
             WHERE id = %s
             LIMIT 1
         """
@@ -14,7 +14,7 @@ class Sentences(object):
     def _getTargetSentenceInfo(self, conn, target_text_id):
         cursor = conn.cursor()
         query = """
-            SELECT * FROM target_texts
+            SELECT * FROM target_text_users
             WHERE id = %s
             LIMIT 1
         """
@@ -183,7 +183,7 @@ class Sentences(object):
         splited_languages = [ "'{}'".format( item.strip() ) for item in languages.split(',') ]
         organized_languages = ', '.join(splited_languages)
         query = """
-            SELECT * FROM origin_texts
+            SELECT * FROM origin_text_users
             WHERE is_translated = false
               AND language IN (%s)
             LIMIT 1
@@ -203,6 +203,8 @@ class Sentences(object):
             return False
 
         original_contributor_id = ret['contributor_id']
+        original_contributor_media = ret['contributor_media']
+        original_contributor_text_id = ret['contributor_text_id']
         origin_lang = ret['language']
         origin_text = ret['text']
         origin_tag = ret['tag']
@@ -218,5 +220,5 @@ class Sentences(object):
                 origin_tag, tags,
                 origin_where_contributed, where_contribute)
 
-        return True, complete_id
+        return True, complete_id, origin_contributor_id, original_contributor_media, original_contributor_text_id, origin_lang
 

@@ -208,14 +208,89 @@ def getId():
 def setLanguage():
     conn = connect_db()
 
-    user_id = request.form['user_id']
+    media = request.form['media']
+    text_id = request.form['text_id']
     languages = request.form['languages']
     userObj = Users()
-    is_ok = userObj.setLanguage( int(user_id), languages )
+    is_ok = userObj.setLanguage( conn, media, text_id, languages )
     if is_ok == True:
         return make_response(json.jsonify(result="ok"), 200)
     else:
         return make_response(json.jsonify(result="fail"), 410)
+
+@app.route('/api/v1/getSentence', methods=['GET'])
+def getSentence():
+    conn = connect_db()
+
+    languages = request.args.get('languages', 'ko,en')
+
+    sentenceObj = Sentence()
+    ret = sentenceObj.getOneSentences( conn, languages )
+    return make_response(json.jsonify(
+        origin_text_id=ret.get('id'),
+        contributor_media=ret.get('contributor_media'),
+        contributor_text_id=ret.get('contributor_text_id'),
+        text=ret.get('text'),
+        origin_lang=ret.get('language'),
+        where_contributed=ret.get('where_contributed'),
+        tags=ret.get('tag')), 200)
+
+@app.route('/api/v1/inputTranslation', methods=['POST'])
+def inputTranslation():
+    conn = connect_db()
+    original_text_id = request.form['original_text_id']
+
+    contributor_media = request.form['contributor_media']
+    contributor_text_id = request.form['contributor_text_id']
+    target_lang = request.form['target_lang']
+    target_text = reqeust.form['target_text']
+
+    tags = request.form.get('tags')
+    where_contribute = request.form.get('where_contribute')
+
+    sentenceObj = Sentence()
+    userObj = Users()
+    translatorObj = Translator()
+
+    contributor_user_id_obj = userObj._getId(conn, contributor_media, contributor_text_id)
+    if contributor_user_id_obj is None or len(contributor_user_id_obj) < 1:
+        return make_response(json.jsonify(result="fail"), 410)
+
+    contributor_id = contributor_user_id_obj['id']
+    is_ok, complete_id, origin_contributor_id, original_contributor_media, original_contributor_text_id, origin_lang = sentenceObj.inputTranslation(conn, original_text_id, contributor_id, original_text_id, target_lang, target_text, where_contribute, tags)
+
+    if origin_contributor_id == 0:
+        is_ok = userObj.getPoint(conn, contributor_media, contributor_text_id, 2)
+        is_ok = translatorObj.writeActionLog(contributor_id, None, origin_lang, target_lang, 'origin_contribute', 1, 0)
+        is_ok = translatorObj.writeActionLog(contributor_id, None, origin_lang, target_lang, 'target_contribute', 1, 0)
+        is_ok = translatorObj.writeActionLog(contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
+        is_ok = translatorObj.writeActionLog(contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
+
+    else:
+        is_ok = userObj.getPoint(conn, original_contributor_media, original_contributor_text_id, 1)
+        is_ok = userObj.getPoint(conn, contributor_media, contributor_text_id, 1)
+        is_ok = translatorObj.writeActionLog(contributor_id, None, origin_lang, target_lang, 'target_contribute', 1, 0)
+        is_ok = translatorObj.writeActionLog(origin_contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
+        is_ok = translatorObj.writeActionLog(contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
+
+
+    return make_response(json.jsonify(result="ok"), 200)
+
+@app.route('/api/v1/completePairLog', methods=['GET'])
+def completePariLog():
+    conn = connect_db()
+
+    page = request.args.get('page', 1)
+    ret = translator.viewCompleteTranslation(conn, int(page))
+    return make_response(json.jsonify(data=ret), 200)
+
+@app.route('/api/v1/actionLog', methods=['GET'])
+def actionLog():
+    conn = connect_db()
+
+    page = request.args.get('page', 1)
+    ret = translator.viewActionLog(conn, int(page))
+    return make_response(json.jsonify(data=ret), 200)
 
 @app.route('/api/v2/external/telegram/<auth_key>/webhook', methods=['POST'])
 def webHook(auth_key):

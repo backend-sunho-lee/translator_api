@@ -442,6 +442,7 @@ class Translator(object):
             else:
                 sentenceCtrlObj = SentenceCtrl()
                 is_ok, original_sentence_id = sentenceCtrlObj._inputOriginalSentence(conn, order_user_id, source_lang, sentence, where_contributed, tags)
+                is_ok = self.writeActionLog(order_user_id, ret[2], source_lang, target_lang, 'origin_contribute', 1, 0)
 
         is_ok, result = self.doWorkSingle(source_lang, target_lang, sentences)
 
