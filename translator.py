@@ -391,6 +391,16 @@ class Translator(object):
         cursor.execute(query, ( 20 * (page-1), ))
         return cursor.fetchall()
 
+    def viewOneCompleteUnit(self, conn, complete_sentence_id, page=1):
+        cursor = conn.cursor()
+        query = """
+            SELECT *
+            FROM complete_sentence_users
+            WHERE id = %s
+        """
+        cursor.execute(query, ( complete_sentence_id, ))
+        return cursor.fetchone()
+
     def doWorkWithExternal(self, conn, source_lang, target_lang, sentences, user_id, where_contributed=None, order_user=None, media=None, memo="", tags=""):
         
         #is_ok, result = self.doWork(source_lang_id, target_lang_id, sentences)

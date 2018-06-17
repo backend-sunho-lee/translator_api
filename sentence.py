@@ -194,8 +194,9 @@ class Sentences(object):
         organized_languages = ', '.join(splited_languages)
         query = """
             SELECT * FROM origin_text_users
-            WHERE is_translated = false
-              AND language IN ({})
+            WHERE language IN ({})
+              -- AND is_translated = false
+            ORDER BY RAND()
             LIMIT 1
         """.format(organized_languages)
         cursor.execute(query)
