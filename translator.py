@@ -225,7 +225,8 @@ class Translator(object):
                      }
 
     def recordToTranslationLog(self, conn, source_lang, target_lang, sentences
-                 , google_result, bing_result, ciceron_result, memo, tags, user_id):
+                 , google_result, bing_result, ciceron_result, memo, tags, user_id
+                 , is_db_used, complete_sentence_id):
 
         cursor = conn.cursor()
         query = """
@@ -239,9 +240,11 @@ class Translator(object):
                  , memo
 		 , user_id
                  , executed_at
+                 , is_db_used
+                 , complete_sentence_id
                  )
             VALUES
-                (%s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+                (%s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
         """
         try:
             cursor.execute(query,
@@ -252,6 +255,8 @@ class Translator(object):
 		     ciceron_result,
                      memo,
 		     user_id, 
+                     is_db_used,
+                     complete_sentence_id,
 		     )
                     )
         except:
@@ -448,8 +453,16 @@ class Translator(object):
 
             else:
                 sentenceCtrlObj = SentenceCtrl()
-                is_ok, original_sentence_id = sentenceCtrlObj._inputOriginalSentence(conn, order_user_id, source_lang, sentence, where_contributed, tags)
-                is_ok = self.writeActionLog(conn, order_user_id, ret[2], source_lang, target_lang, 'origin_contribute', 1, 0)
+                code, original_sentence_id = sentenceCtrlObj._inputOriginalSentence(conn, order_user_id, source_lang, sentence, where_contributed, tags)
+                if code == 0:
+                    is_ok = self.writeActionLog(conn, order_user_id, ret[2], source_lang, target_lang, 'origin_contribute', 1, 0)
+                elif code == 1:
+                    # Duplicate origin lang contribution
+                    # 태그 로직 반영되면 변경예정
+                    pass
+
+                else:
+                    return False, None
 
         is_ok, result = self.doWorkSingle(source_lang, target_lang, sentences)
 
@@ -469,10 +482,13 @@ class Translator(object):
         else:
             result['google'] = ' '.join(splitted_translated_sentence)
 
+        is_db_used = True if len(splitted_translated_sentence) > 0 else False
+        complete_sentence_ids = ','.join( [ str( item['data'][6] ) for item in splitted_translated_sentence] )
+
         is_ok = self.recordToTranslationLog(
                     conn, source_lang, target_lang, sentences,
                     result.get('google'), result.get('bing'), result.get('ciceron'),
-                    memo, tags, user_id
+                    memo, tags, user_id, is_db_used, complete_sentence_ids
                 )
 
         is_ok = self.increaseCallCnt(conn, user_id)

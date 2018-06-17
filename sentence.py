@@ -53,11 +53,12 @@ class Sentences(object):
 
         except pymysql.err.IntegrityError:
             print("Duplicate sentence {}".format(text))
+            return 1, None
 
         except:
             traceback.print_exc()
             conn.rollback()
-            return False, None
+            return 2, None
 
         conn.commit()
 
@@ -65,9 +66,9 @@ class Sentences(object):
         cursor.execute(query_getId)
         ret = cursor.fetchone()
         if ret is None or len(ret) < 1:
-            return False, None
+            return 3, None
 
-        return True, ret['last_id']
+        return 0, ret['last_id']
 
     def _inputTargetSentence(self, conn, contributor_id, original_text_id, language,
             text, where_contributed, tags=""):
@@ -97,13 +98,12 @@ class Sentences(object):
             cursor.execute(query, (contributor_id, original_text_id, language, text, tags, where_contributed, ))
         except pymysql.err.IntegrityError:
             print("Duplicate sentence {}".format(text))
+            return False, None
 
         except:
             traceback.print_exc()
             conn.rollback()
             return False, None
-
-        conn.commit()
 
         query_getId = "SELECT LAST_INSERT_ID() as last_id"
         cursor.execute(query_getId)
@@ -154,21 +154,20 @@ class Sentences(object):
 
         except pymysql.err.IntegrityError:
             print("Duplicate sentence {}".format(target_text))
+            return 1, None
 
         except:
             traceback.print_exc()
             conn.rollback()
-            return False, None
-
-        conn.commit()
+            return 2, None
 
         query_getId = "SELECT LAST_INSERT_ID() as last_id"
         cursor.execute(query_getId)
         ret = cursor.fetchone()
         if ret is None or len(ret) < 1:
-            return False, None
+            return 3, None
 
-        return True, ret['last_id']
+        return 0, ret['last_id']
 
     def _markAsTranslated(self, conn, origin_text_id):
         cursor = conn.cursor()
@@ -184,7 +183,6 @@ class Sentences(object):
             conn.rollback()
             return False
 
-        conn.commit()
         return True
 
 
@@ -223,7 +221,7 @@ class Sentences(object):
 
         is_ok = self._markAsTranslated(conn, original_text_id)
 
-        is_ok, complete_id = self._inputCompleteSentence(conn,
+        code, complete_id = self._inputCompleteSentence(conn,
                 original_text_id, target_text_id,
                 original_contributor_id, target_contributor_id,
                 origin_lang, target_lang,
@@ -231,5 +229,10 @@ class Sentences(object):
                 origin_tag, tags,
                 origin_where_contributed, where_contribute)
 
-        return True, complete_id, original_contributor_id, original_contributor_media, original_contributor_text_id, origin_lang
+        if code == 0:
+            conn.commit()
+        elif code > 0:
+            conn.rollback()
+
+        return code, complete_id, original_contributor_id, original_contributor_media, original_contributor_text_id, origin_lang
 
