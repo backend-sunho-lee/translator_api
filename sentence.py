@@ -186,19 +186,32 @@ class Sentences(object):
         return True
 
 
-    def getOneSentences(self, conn, languages):
+    def getOneSentences(self, conn, media, text_id, language):
         cursor = conn.cursor()
-        splited_languages = [ "'{}'".format( item.strip() ) for item in languages.split(',') ]
-        organized_languages = ', '.join(splited_languages)
         query = """
             SELECT * FROM origin_text_users
-            WHERE language IN ({})
-              -- AND is_translated = false
-            ORDER BY RAND()
+            WHERE language = %s
+              AND is_translated = false
+            ORDER BY contributed_at DESC
             LIMIT 1
         """.format(organized_languages)
         cursor.execute(query)
-        return cursor.fetchone()
+        ret = cursor.fetchone()
+
+        query_updateId = """
+            UPDATE users
+              SET last_original_sentence_id = %s
+            WHERE media = %s AND text_id = %s
+        """
+        try:
+            cursor.execute(query_updateId, (ret['id'], media, text_id, ))
+        except:
+            traceback.print_exc()
+            conn.rollback()
+            return False
+
+        conn.commit()
+        return ret
 
     def inputTranslation(self, conn,
             original_text_id,

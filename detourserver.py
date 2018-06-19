@@ -198,6 +198,7 @@ def getId():
 
     media = request.form['media']
     text_id = request.form['text_id']
+    chat_id = request.form.get('chat_id')
 
     userObj = Users()
     ret = userObj.getId(conn, media, text_id)
@@ -217,14 +218,44 @@ def setLanguage():
     else:
         return make_response(json.jsonify(result="fail"), 410)
 
+@app.route('/api/v1/setSourceLanguage', methods=['POST'])
+def setSourceLanguage():
+    conn = connect_db()
+
+    media = request.form['media']
+    text_id = request.form['text_id']
+    languages = request.form['language']
+    userObj = Users()
+    is_ok = userObj.setSourceLanguage( conn, media, text_id, languages )
+    if is_ok == True:
+        return make_response(json.jsonify(result="ok"), 200)
+    else:
+        return make_response(json.jsonify(result="fail"), 410)
+
+@app.route('/api/v1/setTargetLanguage', methods=['POST'])
+def setSourceLanguage():
+    conn = connect_db()
+
+    media = request.form['media']
+    text_id = request.form['text_id']
+    languages = request.form['language']
+    userObj = Users()
+    is_ok = userObj.setTargetLanguage( conn, media, text_id, languages )
+    if is_ok == True:
+        return make_response(json.jsonify(result="ok"), 200)
+    else:
+        return make_response(json.jsonify(result="fail"), 410)
+
 @app.route('/api/v1/getSentence', methods=['GET'])
 def getSentence():
     conn = connect_db()
 
-    languages = request.args.get('languages', 'ko,en')
+    languages = request.args.get('languages', 'en')
+    media = request.args.get('media', 'web')
+    text_id = request.args.get('text_id', 'anonymous')
 
     sentenceObj = Sentences()
-    ret = sentenceObj.getOneSentences( conn, languages )
+    ret = sentenceObj.getOneSentences( conn, media, text_id, languages )
     ret = ret if ret is not None else {}
 
     return make_response(json.jsonify(
@@ -309,13 +340,11 @@ def webHook(auth_key):
     if auth_key is None or auth_key == "":
         return make_response('No Auth Key', 503)
 
-    telegram_update = request.get_json()
     
-    if auth_key.startswith("CCR-6177F4F8") and auth_key.endswith("6945FD2BD"):
-        API_ENDPOINT = "https://api.telegram.org/bot575363781:AAGCIxEWupZhjlqBJwPvD6eM_Lin3jXdFnE/sendMessage"
-        source_lang = 'ko'
-        target_lang = 'en'
+    if auth_key.startswith("CCR-C57085940F") and auth_key.endswith("39BAEA39"):
+        pass
 
+    telegram_update = request.get_json()
     chat_id = telegram_update['message']['chat']['id']
     sentence = telegram_update['message']['text']
 
