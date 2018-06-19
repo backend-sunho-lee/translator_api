@@ -233,7 +233,7 @@ def setSourceLanguage():
         return make_response(json.jsonify(result="fail"), 410)
 
 @app.route('/api/v1/setTargetLanguage', methods=['POST'])
-def setSourceLanguage():
+def setTargetLanguage():
     conn = connect_db()
 
     media = request.form['media']

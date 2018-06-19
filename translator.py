@@ -244,7 +244,7 @@ class Translator(object):
                  , complete_sentence_id
                  )
             VALUES
-                (%s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+                (%s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, %s, %s)
         """
         try:
             cursor.execute(query,
@@ -483,7 +483,7 @@ class Translator(object):
             result['google'] = ' '.join(splitted_translated_sentence)
 
         is_db_used = True if len(splitted_translated_sentence) > 0 else False
-        complete_sentence_ids = ','.join( [ str( item['data'][6] ) for item in splitted_translated_sentence] )
+        complete_sentence_ids = ','.join( [ str( item['data'][6] ) for item in searched_sentences ] )
 
         is_ok = self.recordToTranslationLog(
                     conn, source_lang, target_lang, sentences,
