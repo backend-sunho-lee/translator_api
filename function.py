@@ -15,7 +15,11 @@ class TelegramBotAction(object):
                     , "parse_mode": "Markdown"
                   } 
         for _ in range(100):
-            resp = requests.post(apiEndpoint_send, data=payload, timeout=5)
+            try:
+                resp = requests.post(apiEndpoint_send, data=payload, timeout=5)
+            except:
+                continue
+
             if resp.status_code == 200:
                 break
 
@@ -33,8 +37,12 @@ class TelegramBotAction(object):
         headers={"Content-Type": "application/json"}
 
         for _ in range(100):
-            resp = requests.post(apiEndpoint_send, headers=headers,
+            try:
+                resp = requests.post(apiEndpoint_send, headers=headers,
                                                    data=json.dumps(payload), timeout=5)
+            except:
+                continue
+
             if resp.status_code == 200:
                 break
 
@@ -45,7 +53,11 @@ class TelegramBotAction(object):
                   }
 
         for _ in range(100):
-            resp = requests.post(apiEndpoint_send, data=payload, timeout=5)
+            try:
+                resp = requests.post(apiEndpoint_send, data=payload, timeout=5)
+            except:
+                continue
+
             if resp.status_code == 200:
                 break
 
