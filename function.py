@@ -44,9 +44,6 @@ class TelegramBotAction(object):
                     "callback_query_id": query_id
                   }
 
-        for key, value in params.iters():
-
-
         for _ in range(100):
             resp = requests.post(apiEndpoint_send, data=payload, timeout=5)
             if resp.status_code == 200:
