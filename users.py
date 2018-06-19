@@ -60,7 +60,8 @@ class Users(object):
                   , "languages": ""
                   , "source_lang": None
                   , "target_lang": None
-                  , "last_original_sentence_id": None
+                  , "last_original_text_id": None
+                  , "chat_id": None
                   , "point": []
                     }
 
@@ -74,7 +75,8 @@ class Users(object):
                   , "languages": ret['languages']
                   , "source_lang": ret['source_lang']
                   , "target_lang": ret['target_lang']
-                  , "last_original_sentence_id": ret['last_original_sentence_id']
+                  , "chat_id": ret['chat_id']
+                  , "last_original_text_id": ret['last_original_text_id']
                   , "point": self._getPoint(conn, ret['id'])
                     }
 

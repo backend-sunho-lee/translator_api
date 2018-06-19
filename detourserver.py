@@ -202,6 +202,10 @@ def getId():
 
     userObj = Users()
     ret = userObj.getId(conn, media, text_id)
+
+    if chat_id != None:
+        is_ok = userObj.setChatId(conn, media, text_id, chat_id)
+
     return make_response(json.jsonify(**ret), 200)
 
 @app.route('/api/v1/setLanguage', methods=['POST'])
@@ -241,6 +245,9 @@ def setTargetLanguage():
     languages = request.form['language']
     userObj = Users()
     is_ok = userObj.setTargetLanguage( conn, media, text_id, languages )
+
+    user_dat = userObj.getId(conn, media, text_id)
+    is_ok = userObj.getPoint(conn, media, text_id, user_dat['source_lang'], user_dat['target_lang'], 0)
     if is_ok == True:
         return make_response(json.jsonify(result="ok"), 200)
     else:
@@ -294,15 +301,15 @@ def inputTranslation():
 
     if code == 0:
         if origin_contributor_id == 0:
-            is_ok = userObj.getPoint(conn, contributor_media, contributor_text_id, 2)
+            is_ok = userObj.getPoint(conn, contributor_media, contributor_text_id, origin_lang, target_lang2)
             is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'origin_contribute', 1, 0)
             is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'target_contribute', 1, 0)
             is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
             is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
 
         else:
-            is_ok = userObj.getPoint(conn, original_contributor_media, original_contributor_text_id, 1)
-            is_ok = userObj.getPoint(conn, contributor_media, contributor_text_id, 1)
+            is_ok = userObj.getPoint(conn, original_contributor_media, original_contributor_text_id, origin_lang, target_lang, 1)
+            is_ok = userObj.getPoint(conn, contributor_media, contributor_text_id, origin_lang, target_lang, 1)
             is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'target_contribute', 1, 0)
             is_ok = translator.writeActionLog(conn, origin_contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
             is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)

@@ -27,7 +27,7 @@ class TelegramBotAction(object):
                     , "parse_mode": "Markdown"
                   }
 
-        for key, value in params.iters():
+        for key, value in params.items():
             payload[key] = value
 
         headers={"Content-Type": "application/json"}
@@ -50,11 +50,13 @@ class TelegramBotAction(object):
                 break
 
 
-    def _getId(self, text_id):
+    def _getId(self, text_id, chat_id=None):
         payloads = {
                 "media": "telegram"
               , "text_id": text_id
                 }
+        if chat_id != None:
+            payloads['chat_id'] = chat_id
     
         try:
             resp = requests.post("{}/api/v1/getId".format(self.domain), data=payloads, timeout=5)
@@ -67,7 +69,7 @@ class TelegramBotAction(object):
         return ret
     
     def newUser(self, chat_id, text_id):
-        ret = self_getId(text_id)
+        ret = self._getId(text_id, chat_id)
         message_success = "Thanks to be a trainer of our LangChain translator!\nYou may start to do it after setting your language!"
         self._sendNormalMessage(chat_id, message_success)
 
@@ -117,16 +119,19 @@ class TelegramBotAction(object):
             ret = []
             temp_ret = []
             for idx, item in enumerate(lang_list):
-                if idx != skip_idx and idx == -1:
+                if idx != skip_idx and skip_idx == -1:
                     item['callback_data'] = '1st|{}'.format(item['callback_data'])
                     temp_ret.append(item)
-                elif idx != skip_idx and idx != -1:
+                elif idx != skip_idx and skip_idx != -1:
                     item['callback_data'] = '2nd|{}'.format(item['callback_data'])
                     temp_ret.append(item)
 
-                if len(temp_ret) == 3:
+                if len(temp_ret) == 3 and idx < len(lang_list) - 1:
                     ret.append(temp_ret)
                     temp_ret = []
+
+            else:
+                ret.append(temp_ret)
 
             return ret
 
@@ -161,7 +166,7 @@ class TelegramBotAction(object):
         ret = self._getId(text_id)
         balances = ret['point']
 
-        message = "Here is your points!\nThanks for your contribution!\n"
+        message = "Here is your points!\nThanks for your contribution!\n\n"
         for item in balances:
             message += "{} -> {}: *{}* Points\n".format(item['source_lang'], item['target_lang'], item['point'])
         self._sendNormalMessage(chat_id, message)
@@ -185,10 +190,10 @@ class TelegramBotAction(object):
 
         ret = resp.json()
         message = "Please translate this sentence into *{}*:\n\n".format(target_lang)
-        for item in ret:
-            message += "*{}*\n\n".format(ret['text'])
-            message += "Source media: {}\n".format(ret['where_contributed'])
-            message += "Tags: {}".format(ret.get('tag'))
+
+        message += "*{}*\n\n".format(ret['text'])
+        message += "Source media: {}\n".format(ret['where_contributed'])
+        message += "Tags: {}".format(ret.get('tag'))
 
         self._sendNormalMessage(chat_id, message)
 
@@ -201,7 +206,7 @@ class TelegramBotAction(object):
         original_text_id = ret['last_original_text_id']
 
         payload = {
-              "original_text_id": ret['original_text_id']
+              "original_text_id": original_text_id
             , "contributor_media": "telegram"
             , "contributor_text_id": text_id
             , "target_lang": ret['target_lang']
@@ -211,7 +216,7 @@ class TelegramBotAction(object):
         }
 
         try:
-            resp = requests.post("{}/api/v1/inputTranslation".format(self.domain), data=payloads, timeout=5)
+            resp = requests.post("{}/api/v1/inputTranslation".format(self.domain), data=payload, timeout=5)
         except:
             message_fail = "There seems a trouble to execute it. Please try again!"
             self._sendNormalMessage(chat_id, message_fail)

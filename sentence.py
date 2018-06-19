@@ -194,13 +194,13 @@ class Sentences(object):
               AND is_translated = false
             ORDER BY contributed_at DESC
             LIMIT 1
-        """.format(organized_languages)
-        cursor.execute(query)
+        """
+        cursor.execute(query, (language, ))
         ret = cursor.fetchone()
 
         query_updateId = """
             UPDATE users
-              SET last_original_sentence_id = %s
+              SET last_original_text_id = %s
             WHERE media = %s AND text_id = %s
         """
         try:

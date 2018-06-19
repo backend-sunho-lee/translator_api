@@ -71,7 +71,7 @@ def checkAuth(conn, key):
     query = """
         SELECT count(*) as cnt
         FROM auth_key
-        WHERE key = %s
+        WHERE api_key = %s
     """
     cursor.execute(query, (key, ))
     ret = cursor.fetchone()
@@ -91,7 +91,7 @@ def webHook(auth_key):
     if auth_key is None or auth_key == "":
         return make_response('No Auth Key', 503)
 
-    is_auth_activated = checkAuth(auth_key)
+    is_auth_activated = checkAuth(conn, auth_key)
     if is_auth_activated == False:
         return make_response('Invalid key', 403)
 
@@ -125,7 +125,8 @@ def webHook(auth_key):
             actionCtrl.getSentence(chat_id, username)
 
         elif sentence == 'Set Language':
-            message = "Which language do you want to traslate from?"
+            ret = actionCtrl._getId(username)
+            message = "Current setting: *{}* -> *{}*\n\nWhich language do you want to traslate from?".format(ret['source_lang'], ret['target_lang'])
             data = actionCtrl.languageSelect()
             actionCtrl._sendWithData(chat_id, message, params=data)
 
@@ -160,17 +161,15 @@ def webHook(auth_key):
         elif seq == '2nd':
             # Store
             actionCtrl.setTargetLanguage(chat_id, username, lang)
+            actionCtrl._answerCallbackQuery(query_id)
 
             # Welcome message + show general keyboard
-            message = "Settings are all done!\nPlease press 'Translate' button below and earn point immediately!"
+            ret = actionCtrl._getId(username)
+            message = "Settings are all done!\nCurrent setting: *{}* -> *{}*\n\nPlease press 'Translate' button below and earn point immediately!".format(ret['source_lang'], ret['target_lang'])
             keyboard = actionCtrl.normalKeyvoardSetting()
             actionCtrl._sendWithData(chat_id, message, params=keyboard)
 
-    if is_ok == True:
-        return make_response("OK", 200)
-
-    else:
-        return make_response("Fail", 410)
+    return make_response("OK", 200)
 
 
 if __name__ == "__main__":
