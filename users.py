@@ -177,3 +177,63 @@ class Users(object):
         conn.commit()
         return True
 
+    def setAuthCode(self, conn, media, text_id):
+        from random import randint
+
+        code = randint(100000, 999999)
+        user_obj = self._getId(conn, media, text_id)
+        chat_id = user_obj['chat_id']
+        cursor = conn.cursor()
+        query = """
+            INSERT INTO auth_code
+              (user_id, auth_code, is_used, requested_at)
+            VALUES
+              (%s,      %s,        false,   CURRENT_TIMESTAMP)
+        """
+        try:
+            cursor.execute(query, (user_obj['id'], str(code), ))
+        except:
+            traceback.print_exc()
+            conn.rollback()
+            return False, None
+
+        conn.commit()
+        return True, code, chat_id
+
+    def checkAuthCode(self, conn, media, text_id, code):
+        user_obj = self._getId(conn, media, text_id)
+        chat_id = user_obj['chat_id']
+        cursor = conn.cursor()
+        query_check = """
+            SELECT id, auth_code
+            FROM auth_code
+            WHERE user_id = %s AND is_used = false
+            ORDER BY requested_at DESC
+            LIMIT 1
+        """
+        cursor.execute(query_check, (user_obj['id'], ))
+        ret = cursor.fetchone()
+        if ret is None or len(ret) < 1:
+            return False, None
+
+        rec_id = ret['id']
+        code_fromDb = ret['auth_code']
+        if code_fromDb != code:
+            return False, None
+
+        query_mark = """
+            UPDATE auth_code
+            SET is_used = true
+            WHERE id = %s
+        """
+
+        try:
+            cursor.execute(query_mark, (rec_id, ))
+        except:
+            traceback.print_exc()
+            conn.rollback()
+            return False, None
+
+        conn.commit()
+        return True, chat_id
+

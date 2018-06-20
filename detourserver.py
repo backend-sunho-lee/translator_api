@@ -45,6 +45,7 @@ GCM_API_KEY = conf['google']['key']
 BING_KEY = conf['bing']['key']
 SESSION_TYPE = 'redis'
 SESSION_COOKIE_NAME = "cicerontranslator"
+BOT_API_KEY = conf['telegram']['trainer']
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -192,6 +193,60 @@ def translateExternal():
         return make_response(json.jsonify(
             message=""), 400)
 
+@app.route('/api/v1/setAuthCode', methods=['POST'])
+def setAuthCode():
+    conn = connect_db()
+    media = request.form['media']
+    text_id = request.form['text_id']
+
+    userObj = Users()
+    is_ok, code, chat_id = userObj.setAuthCode(conn, media, text_id)
+
+    try:
+        from function import TelegramBotAction
+    except:
+        from .function import TelegramBotAction
+
+    actionCtrl = TelegramBotAction(BOT_API_KEY)
+    message  = "External login request!\n"
+    message += "Please input following code:\n\n"
+    message += "*{}*".format(code)
+    actionCtrl._sendNormalMessage(chat_id, message)
+
+    return make_response(json.jsonify(result="ok"), 200)
+
+@app.route('/api/v1/checkAuthCode', methods=['POST'])
+def checkAuthCode():
+    conn = connect_db()
+    media = request.form['media']
+    text_id = request.form['text_id']
+    code = request.form['code']
+
+    userObj = Users()
+    is_ok, chat_id = userObj.checkAuthCode(conn, media, text_id, code)
+
+    if is_ok == True:
+        session['checked'] = True
+
+        try:
+            from function import TelegramBotAction
+        except:
+            from .function import TelegramBotAction
+
+        actionCtrl = TelegramBotAction(BOT_API_KEY)
+        message  = "✅ Successfully authenticated!"
+        actionCtrl._sendNormalMessage(chat_id, message)
+
+        return make_response(json.jsonify(result="ok"), 200)
+
+    else:
+        return make_response(json.jsonify(result="fail"), 403)
+
+@app.route('/api/v1/logout', methods=['GET'])
+def logout():
+    session['checked'] = False
+    return make_response(json.jsonify(result="ok"), 200)
+
 @app.route('/api/v1/getId', methods=['POST'])
 def getId():
     conn = connect_db()
@@ -286,6 +341,9 @@ def getSentence():
 
 @app.route('/api/v1/inputTranslation', methods=['POST'])
 def inputTranslation():
+    if session.get('checked', False) == False and request.remote_addr != '127.0.0.1':
+        return make_response(json.jsonify(result="fail"), 403)
+
     conn = connect_db()
     original_text_id = request.form['original_text_id']
 
