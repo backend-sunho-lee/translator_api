@@ -113,18 +113,18 @@ class TelegramBotAction(object):
 
     def languageSelect(self, source_lang=None):
         lang_list = [
-                {"text":"Korean", "callback_data":"ko"},
-                {"text":"English", "callback_data":"en"},
-                {"text":"Japanese", "callback_data":"ja"},
-                {"text":"Chinese", "callback_data":"zh"},
-                {"text":"Thai", "callback_data":"th"},
-                {"text":"Spanish", "callback_data":"es"},
-                {"text":"Portuguese", "callback_data":"pt"},
-                {"text":"Vietnamese", "callback_data":"vi"},
-                {"text":"German", "callback_data":"de"},
-                {"text":"French", "callback_data":"fr"},
-                {"text":"Russian", "callback_data":"ru"},
-                {"text":"Indonesian", "callback_data":"id"}
+                {"text":"🇰🇷 Korean", "callback_data":"ko"},
+                {"text":"🇺🇸 English", "callback_data":"en"},
+                {"text":"🇯🇵 Japanese", "callback_data":"ja"},
+                {"text":"🇨🇳 Chinese", "callback_data":"zh"},
+                {"text":"🇹🇭 Thai", "callback_data":"th"},
+                {"text":"🇪🇸 Spanish", "callback_data":"es"},
+                {"text":"🇵🇹 Portuguese", "callback_data":"pt"},
+                {"text":"🇻🇳 Vietnamese", "callback_data":"vi"},
+                {"text":"🇩🇪 German", "callback_data":"de"},
+                {"text":"🇫🇷 French", "callback_data":"fr"},
+                {"text":"🇷🇺 Russian", "callback_data":"ru"},
+                {"text":"🇮🇩 Indonesian", "callback_data":"id"}
                     ]
 
         def make_array(arr, skip_idx= -1):
@@ -201,11 +201,15 @@ class TelegramBotAction(object):
             return
 
         ret = resp.json()
-        message = "Please translate this sentence into *{}*:\n\n".format(target_lang)
+        if ret['text'] is not None:
+            message = "Please translate this sentence into *{}*:\n\n".format(target_lang)
 
-        message += "*{}*\n\n".format(ret['text'])
-        message += "Source media: {}\n".format(ret['where_contributed'])
-        message += "Tags: {}".format(ret.get('tag'))
+            message += "*{}*\n\n".format(ret['text'])
+            message += "Source media: {}\n".format(ret['where_contributed'])
+            message += "Tags: {}".format(ret.get('tag'))
+
+        else:
+            message = "Oops! There is no source sentence that matching language.\nPlease call @langchainbot for translation, then source sentence will be gathered!".format(target_lang)
 
         self._sendNormalMessage(chat_id, message)
 
@@ -216,6 +220,9 @@ class TelegramBotAction(object):
         ret = self._getId(text_id)
 
         original_text_id = ret['last_original_text_id']
+        if original_text_id is None:
+            message = "Please press 'Translate' button and contribute translation!"
+            self._sendNormalMessage(chat_id, message)
 
         payload = {
               "original_text_id": original_text_id
