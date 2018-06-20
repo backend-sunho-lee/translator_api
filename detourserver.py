@@ -300,7 +300,7 @@ def inputTranslation():
     code, original_contributor_id, original_contributor_media, original_contributor_text_id, origin_lang, origin_text, origin_tag, origin_where_contributed = sentenceObj.inputTranslation(conn, original_text_id, contributor_id, target_text, target_lang, where_contribute, tags)
 
     if code == 0:
-        if origin_contributor_id == 0:
+        if original_contributor_id == 0:
             is_ok = userObj.getPoint(conn, contributor_media, contributor_text_id, origin_lang, target_lang, 2)
             is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'origin_contribute', 1, 0)
             is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'target_contribute', 1, 0)
