@@ -170,10 +170,10 @@ def webHook(auth_key):
             message += "Just press 'Translate' button and contribute data!\n\n"
 
             message += "*2. How much point can I earn?*\n"
-            message += "Source sentence contributor: *1 Point*.\n"
+            message += "Source sentence contributor: *0.1 Point*.\n"
             message += "Translated sentence contributor: *1 Point*.\n"
-            message += "If 2 contributors are same user: *2 Points*.\n"
-            message += "If I translated a sentence contributed by anonymous user: *2 Points*.\n\n"
+            message += "If 2 contributors are same user: *1.1 Points*.\n"
+            message += "If I translated a sentence contributed by anonymous user: *1.1 Points*.\n\n"
 
             message += "*3. When can I use this point?*\n"
             message += "Before launching LangChain, we'll take snapshot and give announcement about airdrop!\n"

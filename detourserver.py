@@ -301,17 +301,17 @@ def inputTranslation():
 
     if code == 0:
         if original_contributor_id == 0:
-            is_ok = userObj.getPoint(conn, contributor_media, contributor_text_id, origin_lang, target_lang, 2)
+            is_ok = userObj.getPoint(conn, contributor_media, contributor_text_id, origin_lang, target_lang, 1.1)
             is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'origin_contribute', 1, 0)
             is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'target_contribute', 1, 0)
-            is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
+            is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 0.1)
             is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
 
         else:
-            is_ok = userObj.getPoint(conn, original_contributor_media, original_contributor_text_id, origin_lang, target_lang, 1)
+            is_ok = userObj.getPoint(conn, original_contributor_media, original_contributor_text_id, origin_lang, target_lang, 0.1)
             is_ok = userObj.getPoint(conn, contributor_media, contributor_text_id, origin_lang, target_lang, 1)
             is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'target_contribute', 1, 0)
-            is_ok = translator.writeActionLog(conn, original_contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
+            is_ok = translator.writeActionLog(conn, original_contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 0.1)
             is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
 
         ret_data = translator.viewOneCompleteUnit(conn, target_text_id)
