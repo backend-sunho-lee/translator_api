@@ -139,7 +139,6 @@ def webHook(auth_key):
             actionCtrl.getSentence(chat_id, username)
 
     elif telegram_update.get('callback_query') is not None:
-        actionCtrl.clearLastSourceTextId(username)
         # only for select language
         query_obj = telegram_update['callback_query']
         message_obj = query_obj['message']
@@ -148,6 +147,7 @@ def webHook(auth_key):
         query_id = query_obj['id']
         username = query_obj['from']['username']
         data_arr = query_obj['data'].split('|')
+        actionCtrl.clearLastSourceTextId(username)
 
         seq = data_arr[0]
         lang = data_arr[1]
