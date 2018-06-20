@@ -406,14 +406,25 @@ class Translator(object):
         cursor.execute(query, ( 20 * (page-1), ))
         return cursor.fetchall()
 
-    def viewOneCompleteUnit(self, conn, complete_sentence_id, page=1):
+    def viewOneCompleteUnit(self, conn, target_text_id, page=1):
         cursor = conn.cursor()
         query = """
-            SELECT *
-            FROM complete_sentence_users
-            WHERE id = %s
+            SELECT 
+                ori.id as original_text_id
+              , tar.id as target_text_id
+              , ori.contributor_id as origin_contributor_id
+              , tar.contributor_id as target_contributor_id
+              , ori.text as origin_text
+              , tar.text as target_text
+              , ori.contributed_at as origin_contributed_at
+              , tar.contributed_at as target_contributed_at
+            FROM langchain.origin_text_users ori
+            RIGHT OUTER JOIN langchain.target_text_users tar ON ori.id = tar.origin_text_id
+            WHERE
+                  tar.id = %s
+            LIMIT 1
         """
-        cursor.execute(query, ( complete_sentence_id, ))
+        cursor.execute(query, ( target_text_id, ))
         return cursor.fetchone()
 
     def doWorkWithExternal(self, conn, source_lang, target_lang, sentences, user_id, where_contributed=None, order_user=None, media=None, memo="", tags=""):

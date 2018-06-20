@@ -244,5 +244,14 @@ class Sentences(object):
 
         conn.commit()
 
-        return 0, original_contributor_id, original_contributor_media, original_contributor_text_id, origin_lang, origin_text, origin_tag, origin_where_contributed
+        query_getId = "SELECT LAST_INSERT_ID() as last_id"
+        cursor = conn.cursor()
+        cursor.execute(query_getId)
+        ret = cursor.fetchone()
+        if ret is None or len(ret) < 1:
+            return 3, None
+
+        last_id = ret['last_id']
+
+        return 0, last_id, original_contributor_id, original_contributor_media, original_contributor_text_id, origin_lang, origin_text, origin_tag, origin_where_contributed
 

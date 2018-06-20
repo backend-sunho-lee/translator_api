@@ -297,7 +297,7 @@ def inputTranslation():
     else:
         contributor_id = contributor_user_id_obj['id']
 
-    code, original_contributor_id, original_contributor_media, original_contributor_text_id, origin_lang, origin_text, origin_tag, origin_where_contributed = sentenceObj.inputTranslation(conn, original_text_id, contributor_id, target_text, target_lang, where_contribute, tags)
+    code, target_text_id, original_contributor_id, original_contributor_media, original_contributor_text_id, origin_lang, origin_text, origin_tag, origin_where_contributed = sentenceObj.inputTranslation(conn, original_text_id, contributor_id, target_text, target_lang, where_contribute, tags)
 
     if code == 0:
         if original_contributor_id == 0:
@@ -311,10 +311,10 @@ def inputTranslation():
             is_ok = userObj.getPoint(conn, original_contributor_media, original_contributor_text_id, origin_lang, target_lang, 1)
             is_ok = userObj.getPoint(conn, contributor_media, contributor_text_id, origin_lang, target_lang, 1)
             is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'target_contribute', 1, 0)
-            is_ok = translator.writeActionLog(conn, origin_contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
+            is_ok = translator.writeActionLog(conn, original_contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
             is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
 
-        ret_data = translator.viewOneCompleteUnit(conn, complete_id)
+        ret_data = translator.viewOneCompleteUnit(conn, target_text_id)
 
         if ret_data is not None:
             return make_response(json.jsonify(**ret_data), 200)
