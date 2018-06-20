@@ -225,7 +225,8 @@ class Translator(object):
                      }
 
     def recordToTranslationLog(self, conn, source_lang, target_lang, sentences
-                 , google_result, bing_result, ciceron_result, memo, tags, user_id
+                 , google_result, bing_result, ciceron_result, human_correction_result
+                 , memo, tags, user_id
                  , is_db_used, complete_sentence_id):
 
         cursor = conn.cursor()
@@ -237,6 +238,7 @@ class Translator(object):
                  , google_result
                  , bing_result
                  , ciceron_result
+                 , human_correction_result
                  , memo
 		 , user_id
                  , executed_at
@@ -244,7 +246,7 @@ class Translator(object):
                  , complete_sentence_id
                  )
             VALUES
-                (%s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, %s, %s)
+                (%s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, %s, %s)
         """
         try:
             cursor.execute(query,
@@ -253,6 +255,7 @@ class Translator(object):
 		     google_result,
 		     bing_result,
 		     ciceron_result,
+                     human_correction_result,
                      memo,
 		     user_id, 
                      is_db_used,
@@ -271,31 +274,38 @@ class Translator(object):
         cursor = conn.cursor()
         query = """
             SELECT 
-                id
-              , origin_contributor_id
-              , target_contributor_id
-              , origin_text
-              , target_text
-              , added_at
-            FROM complete_sentence_users
+                ori.id as original_text_id
+              , tar.id as target_text_id
+              , ori.contributor_id as origin_contributor_id
+              , tar.contributor_id as target_contributor_id
+              , ori.text as origin_text
+              , tar.text as target_text
+              , ori.contributed_at as origin_contributed_at
+              , tar.contributed_at as target_contributed_at
+            FROM langchain.origin_text_users ori
+            RIGHT OUTER JOIN langchain.target_text_users tar ON ori.id = tar.origin_text_id
             WHERE
-                  origin_lang = %s
-              AND target_lang = %s
-              AND hash_origin = MD5(%s)
+                  ori.language = %s
+              AND tar.language = %s
+              AND ori.text_hash = MD5(%s)
+            ORDER BY RAND()
+            LIMIT 1
         """
         cursor.execute(query, (origin_lang, target_lang, origin_text, ))
         ret = cursor.fetchone()
         if ret is None or len(ret) < 1:
             return False, None, None, None, None, None
 
+        original_text_id = ret['original_text_id']
+        target_text_id = ret['target_text_id']
         original_contributor_id = ret['origin_contributor_id']
         target_contributor_id = ret['target_contributor_id']
         origin_text = ret['origin_text']
         target_text = ret['target_text']
-        added_at = ret['added_at']
-        complete_sentence_id = ret['id']
+        origin_contributed_at = ret['origin_contributed_at']
+        target_contributed_at = ret['target_contributed_at']
 
-        return True, original_contributor_id, target_contributor_id, origin_text, target_text, added_at, complete_sentence_id
+        return True, original_text_id, target_text_id, original_contributor_id, target_contributor_id, origin_text, target_text, origin_contributed_at, target_contributed_at
 
     def increaseCallCnt(self, conn, user_id):
         cursor = conn.cursor()
@@ -315,16 +325,16 @@ class Translator(object):
         conn.commit()
         return True
 
-    def increaseSearchCnt(self, conn, complete_sentence_id):
+    def increaseSearchCnt(self, conn, origin_text_id):
         cursor = conn.cursor()
         query = """
-            UPDATE complete_sentence
-              set cnt = cnt + 1
+            UPDATE origin_texts
+              set count = count + 1
             WHERE
               id = %s
         """
         try:
-            cursor.execute(query, (complete_sentence_id, ))
+            cursor.execute(query, (origin_text_id, ))
         except:
             traceback.print_exc()
             conn.rollback()
@@ -438,24 +448,26 @@ class Translator(object):
             ret = self.findTranslation(conn, source_lang, target_lang, sentence)
 
             # 0: True, 
-            # 1: origin_contributor_id
-            # 2: target_contributor_id
-            # 3: origin_text
-            # 4: translated_text
-            # 5: added_at
-            # 6: complete_sentence_id
+            # 1: original_text_id
+            # 2: target_text_id
+            # 3: origin_contributor_id
+            # 4: target_contributor_id
+            # 5: origin_text
+            # 6: target_text
+            # 7: origin_contributed_at
+            # 8: target_contributed_at
 
             if ret[0] == True: # is_ok
                 dat = {"seq": idx, "data": ret}
                 searched_sentences.append(dat)
-                is_ok = self.increaseSearchCnt(conn, ret[6])
-                is_ok = self.writeActionLog(conn, order_user_id, ret[2], source_lang, target_lang, 'refer', 1, 0)
+                is_ok = self.increaseSearchCnt(conn, ret[1])
+                is_ok = self.writeActionLog(conn, order_user_id, ret[4], source_lang, target_lang, 'refer', 1, 0)
 
             else:
                 sentenceCtrlObj = SentenceCtrl()
                 code, original_sentence_id = sentenceCtrlObj._inputOriginalSentence(conn, order_user_id, source_lang, sentence, where_contributed, tags)
                 if code == 0:
-                    is_ok = self.writeActionLog(conn, order_user_id, ret[2], source_lang, target_lang, 'origin_contribute', 1, 0)
+                    is_ok = self.writeActionLog(conn, order_user_id, 0, source_lang, target_lang, 'origin_contribute', 1, 0)
                 elif code == 1:
                     # Duplicate origin lang contribution
                     # 태그 로직 반영되면 변경예정
@@ -473,21 +485,21 @@ class Translator(object):
         else:
             splitted_translated_sentence = self.sentence_detector.tokenize(result.get('google'))
 
-        for item in searched_sentences:
-            splitted_translated_sentence[ item['seq'] ] = item['data'][4]
+        if len(searched_sentences) > 0:
+            for item in searched_sentences:
+                splitted_translated_sentence[ item['seq'] ] = item['data'][6]
 
-        if (source_lang == 'ko' and target_lang == 'en') or (source_lang == 'en' and target_lang == 'ko'):
-            result['ciceron'] = ' '.join(splitted_translated_sentence)
+            result['human'] = ' '.join(splitted_translated_sentence)
 
         else:
-            result['google'] = ' '.join(splitted_translated_sentence)
+            result['human'] = None
 
-        is_db_used = True if len(splitted_translated_sentence) > 0 else False
-        complete_sentence_ids = ','.join( [ str( item['data'][6] ) for item in searched_sentences ] )
+        is_db_used = True if len(searched_sentences) > 0 else False
+        complete_sentence_ids = ','.join( [ str( item['data'][2] ) for item in searched_sentences ] )
 
         is_ok = self.recordToTranslationLog(
                     conn, source_lang, target_lang, sentences,
-                    result.get('google'), result.get('bing'), result.get('ciceron'),
+                    result.get('google'), result.get('bing'), result.get('ciceron'), result.get('human'),
                     memo, tags, user_id, is_db_used, complete_sentence_ids
                 )
 

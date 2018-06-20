@@ -234,18 +234,15 @@ class Sentences(object):
 
         is_ok = self._markAsTranslated(conn, original_text_id)
 
-        code, complete_id = self._inputCompleteSentence(conn,
-                original_text_id, target_text_id,
-                original_contributor_id, target_contributor_id,
-                origin_lang, target_lang,
-                origin_text, target_text,
-                origin_tag, tags,
-                origin_where_contributed, where_contribute)
+        #code, complete_id = self._inputCompleteSentence(conn,
+        #        original_text_id, target_text_id,
+        #        original_contributor_id, target_contributor_id,
+        #        origin_lang, target_lang,
+        #        origin_text, target_text,
+        #        origin_tag, tags,
+        #        origin_where_contributed, where_contribute)
 
-        if code == 0:
-            conn.commit()
-        elif code > 0:
-            conn.rollback()
+        conn.commit()
 
         return code, complete_id, original_contributor_id, original_contributor_media, original_contributor_text_id, origin_lang
 
