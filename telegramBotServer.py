@@ -169,14 +169,14 @@ def webHook(auth_key):
             message += "*1. How to use it?*\n"
             message += "Just press 'Translate' button and contribute data!\n\n"
 
-            message += "*2. How much point I can earn?*\n"
-            message += "Source sentence contributor: 1 Point.\n"
-            message += "Translated sentence contributor: 1 Point.\n"
-            message += "If 2 contributors are same user: 2 Points.\n"
-            message += "If I translated a sentence contributed by anonymous user: 2 Points.\n\n"
+            message += "*2. How much point can I earn?*\n"
+            message += "Source sentence contributor: *1 Point*.\n"
+            message += "Translated sentence contributor: *1 Point*.\n"
+            message += "If 2 contributors are same user: *2 Points*.\n"
+            message += "If I translated a sentence contributed by anonymous user: *2 Points*.\n\n"
 
             message += "*3. When can I use this point?*\n"
-            message += "Before launching LangChain, we'll take snapshot and apply to our smart contract!\n"
+            message += "Before launching LangChain, we'll take snapshot and give announcement about airdrop!\n"
             keyboard = actionCtrl.normalKeyvoardSetting()
             actionCtrl._sendWithData(chat_id, message, params=keyboard)
 
