@@ -242,7 +242,7 @@ def checkAuthCode():
         return make_response(json.jsonify(result="ok"), 200)
 
     else:
-        message  = "❌ SWrong authentication trial is detected!"
+        message  = "❌ Wrong authentication trial is detected!"
         actionCtrl._sendNormalMessage(chat_id, message)
 
         return make_response(json.jsonify(result="fail"), 403)

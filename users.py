@@ -217,12 +217,12 @@ class Users(object):
         cursor.execute(query_check, (user_obj['id'], ))
         ret = cursor.fetchone()
         if ret is None or len(ret) < 1:
-            return False, None
+            return False, chat_id
 
         rec_id = ret['id']
         code_fromDb = ret['auth_code']
         if code_fromDb != code:
-            return False, None
+            return False, chat_id
 
         query_mark = """
             UPDATE auth_code
@@ -235,7 +235,7 @@ class Users(object):
         except:
             traceback.print_exc()
             conn.rollback()
-            return False, None
+            return False, chat_id
 
         conn.commit()
         return True, chat_id
