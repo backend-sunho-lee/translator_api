@@ -201,7 +201,7 @@ class Sentences(object):
             return False
 
         conn.commit()
-        return ret
+        return True
 
 
     def getOneSentences(self, conn, media, text_id, language):
