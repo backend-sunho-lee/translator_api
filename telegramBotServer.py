@@ -103,11 +103,15 @@ def webHook(auth_key):
         # Except 'select language'
         message_obj = telegram_update['message']
         chat_id = message_obj['chat']['id']
-        sentence = message_obj['text']
+        sentence = message_obj.get('text')
         username = message_obj['from']['username']
 
         if username is None or username == "":
             message = "Oops! You've not set your Telegram username.\nPlease go to *[menu -> Setting -> Username]*, set your username, and type '/start' again."
+            actionCtrl._sendNormalMessage(chat_id, message)
+
+        if sentence is None:
+            message = "Currently we only take text data!\nYour interest and invenstment will be our fuel to develop useful tool such as OCR contributor or text extractor from sound!"
             actionCtrl._sendNormalMessage(chat_id, message)
 
         elif sentence == '/start':
