@@ -244,5 +244,5 @@ class Sentences(object):
 
         conn.commit()
 
-        return True, complete_id, original_contributor_id, original_contributor_media, original_contributor_text_id, origin_lang
+        return 0, original_contributor_id, original_contributor_media, original_contributor_text_id, origin_lang, origin_text, origin_tag, origin_where_contributed
 
