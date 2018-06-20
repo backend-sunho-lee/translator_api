@@ -208,7 +208,7 @@ class Sentences(object):
         except:
             traceback.print_exc()
             conn.rollback()
-            return False
+            return {}
 
         conn.commit()
         return ret
