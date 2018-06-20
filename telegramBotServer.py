@@ -165,7 +165,18 @@ def webHook(auth_key):
 
             # Welcome message + show general keyboard
             ret = actionCtrl._getId(username)
-            message = "Settings are all done!\nCurrent setting: *{}* -> *{}*\n\nPlease press 'Translate' button below and earn point immediately!".format(ret['source_lang'], ret['target_lang'])
+            message  = "Settings are all done!\nCurrent setting: *{}* -> *{}*\n\nPlease press 'Translate' button below and earn point immediately!\n\n".format(ret['source_lang'], ret['target_lang'])
+            message += "*1. How to use it?*\n"
+            message += "Just press 'Translate' button and contribute data!\n\n"
+
+            message += "*2. How much point I can earn?*\n"
+            message += "Source sentence contributor: 1 Point.\n"
+            message += "Translated sentence contributor: 1 Point.\n"
+            message += "If 2 contributors are same user: 2 Points.\n"
+            message += "If I translated a sentence contributed by anonymous user: 2 Points.\n\n"
+
+            message += "*3. When can I use this point?*\n"
+            message += "Before launching LangChain, we'll take snapshot and apply to our smart contract!\n"
             keyboard = actionCtrl.normalKeyvoardSetting()
             actionCtrl._sendWithData(chat_id, message, params=keyboard)
 
