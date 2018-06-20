@@ -182,7 +182,10 @@ class Users(object):
 
         code = randint(100000, 999999)
         user_obj = self._getId(conn, media, text_id)
-        chat_id = user_obj['chat_id']
+        chat_id = user_obj.get('chat_id')
+        if chat_id == None:
+            return False, None, None
+
         cursor = conn.cursor()
         query = """
             INSERT INTO auth_code
@@ -195,7 +198,7 @@ class Users(object):
         except:
             traceback.print_exc()
             conn.rollback()
-            return False, None
+            return False, None, None
 
         conn.commit()
         return True, code, chat_id

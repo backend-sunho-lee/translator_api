@@ -112,6 +112,7 @@ def webHook(auth_key):
 
         elif sentence == '/start':
             actionCtrl.newUser(chat_id, username)
+            actionCtrl.clearLastSourceTextId(username)
 
             # Set source language
             message = "Which language do you want to traslate from?"

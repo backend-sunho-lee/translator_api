@@ -201,6 +201,8 @@ def setAuthCode():
 
     userObj = Users()
     is_ok, code, chat_id = userObj.setAuthCode(conn, media, text_id)
+    if is_ok == False:
+        return make_response(json.jsonify(result="fail"), 410)
 
     try:
         from function import TelegramBotAction
@@ -224,22 +226,25 @@ def checkAuthCode():
 
     userObj = Users()
     is_ok, chat_id = userObj.checkAuthCode(conn, media, text_id, code)
+    try:
+        from function import TelegramBotAction
+    except:
+        from .function import TelegramBotAction
+
+    actionCtrl = TelegramBotAction(BOT_API_KEY)
 
     if is_ok == True:
         session['checked'] = True
 
-        try:
-            from function import TelegramBotAction
-        except:
-            from .function import TelegramBotAction
-
-        actionCtrl = TelegramBotAction(BOT_API_KEY)
         message  = "✅ Successfully authenticated!"
         actionCtrl._sendNormalMessage(chat_id, message)
 
         return make_response(json.jsonify(result="ok"), 200)
 
     else:
+        message  = "❌ SWrong authentication trial is detected!"
+        actionCtrl._sendNormalMessage(chat_id, message)
+
         return make_response(json.jsonify(result="fail"), 403)
 
 @app.route('/api/v1/logout', methods=['GET'])
