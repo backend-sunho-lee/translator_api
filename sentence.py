@@ -185,6 +185,24 @@ class Sentences(object):
 
         return True
 
+    def clearLastSentenceId(self, conn, media, text_id):
+        cursor = conn.cursor()
+
+        query_updateId = """
+            UPDATE users
+              SET last_original_text_id = %s
+            WHERE media = %s AND text_id = %s
+        """
+        try:
+            cursor.execute(query_updateId, (None, media, text_id, ))
+        except:
+            traceback.print_exc()
+            conn.rollback()
+            return False
+
+        conn.commit()
+        return ret
+
 
     def getOneSentences(self, conn, media, text_id, language):
         cursor = conn.cursor()

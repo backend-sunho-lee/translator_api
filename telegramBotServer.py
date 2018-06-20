@@ -119,12 +119,14 @@ def webHook(auth_key):
             actionCtrl._sendWithData(chat_id, message, params=data)
 
         elif sentence == 'Balance':
+            actionCtrl.clearLastSourceTextId(username)
             actionCtrl.checkBalance(chat_id, username)
 
         elif sentence == 'Translate':
             actionCtrl.getSentence(chat_id, username)
 
         elif sentence == 'Set Language':
+            actionCtrl.clearLastSourceTextId(username)
             ret = actionCtrl._getId(username)
             message = "Current setting: *{}* -> *{}*\n\nWhich language do you want to traslate from?".format(ret['source_lang'], ret['target_lang'])
             data = actionCtrl.languageSelect()
@@ -136,6 +138,7 @@ def webHook(auth_key):
             actionCtrl.getSentence(chat_id, username)
 
     elif telegram_update.get('callback_query') is not None:
+        actionCtrl.clearLastSourceTextId(username)
         # only for select language
         query_obj = telegram_update['callback_query']
         message_obj = query_obj['message']

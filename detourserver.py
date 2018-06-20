@@ -253,6 +253,16 @@ def setTargetLanguage():
     else:
         return make_response(json.jsonify(result="fail"), 410)
 
+@app.route('/api/v1/clearLastSentence', methods=['POST'])
+def clearLastSentence():
+    conn = connect_db()
+    media = request.form['media']
+    text_id = request.form['text_id']
+
+    sentenceObj = Sentences()
+    ret = sentenceObj.clearLastSentenceId( conn, media, text_id )
+    return make_response(json.jsonify(result="ok"), 200)
+
 @app.route('/api/v1/getSentence', methods=['GET'])
 def getSentence():
     conn = connect_db()

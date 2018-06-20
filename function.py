@@ -213,6 +213,16 @@ class TelegramBotAction(object):
 
         self._sendNormalMessage(chat_id, message)
 
+    def clearLastSourceTextId(self, text_id):
+        payloads = {
+              , "media": "telegram"
+              , "text_id": text_id
+                }
+        try:
+            resp = requests.post("{}/api/v1/clearLastSentence".format(self.domain), data=payloads, timeout=5)
+        except:
+            return
+
     def inputSentence(self, chat_id, text_id,
             target_text,
             tags=""):
