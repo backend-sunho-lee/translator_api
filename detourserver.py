@@ -200,6 +200,8 @@ def setAuthCode():
     text_id = request.form['text_id']
 
     userObj = Users()
+    sentenceObj = Sentences()
+    ret = sentenceObj.clearLastSentenceId( conn, media, text_id )
     is_ok, code, chat_id = userObj.setAuthCode(conn, media, text_id)
     if is_ok == False:
         return make_response(json.jsonify(result="fail"), 410)
@@ -225,6 +227,8 @@ def checkAuthCode():
     code = request.form['code']
 
     userObj = Users()
+    sentenceObj = Sentences()
+    ret = sentenceObj.clearLastSentenceId( conn, media, text_id )
     is_ok, chat_id = userObj.checkAuthCode(conn, media, text_id, code)
     try:
         from function import TelegramBotAction
