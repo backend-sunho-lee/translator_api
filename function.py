@@ -215,7 +215,7 @@ class TelegramBotAction(object):
 
     def clearLastSourceTextId(self, text_id):
         payloads = {
-              , "media": "telegram"
+                "media": "telegram"
               , "text_id": text_id
                 }
         try:
