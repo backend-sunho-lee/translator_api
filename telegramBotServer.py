@@ -21,6 +21,11 @@ try:
 except:
     from .function import TelegramBotAction
 
+try:
+    from translatorBot import TranslatorBot
+except:
+    from .translatorBot import TranslatorBot
+
 
 conf = {}
 with open('config.json', 'r') as f:
@@ -28,6 +33,8 @@ with open('config.json', 'r') as f:
 
 DATABASE = conf['db']
 BOT_API_KEY = conf['telegram']['trainer']
+TRANSLATOR_API_KEY = conf['telegram']['translator']
+CICERON_TRANSLATOR_KEY = conf['ciceron']['translator']
 
 VERSION = '1.1'
 DEBUG = True
@@ -191,6 +198,30 @@ def webHook(auth_key):
     return make_response("OK", 200)
 
 
+@app.route('/api/v2/external/telegram/translate', methods=['POST'])
+def telegramTranslate():
+    req = request.get_json()
+    message_obj = req.get('message')
+    if message_obj == None:
+        return make_response(json.jsonify(result="ok"), 200)
+
+    chat_id = message_obj['chat']['id']
+    message_id = message_obj['message_id']
+    text_before = message_obj.get('text')
+    username = message_obj.get('from').get('username')
+    chat_type = message_obj['chat']['type']
+    group_title = message_obj['chat'].get('title')
+
+    if text_before == None:
+        return make_response(json.jsonify(result="ok"), 200)
+
+    text_before = text_before.strip()
+
+    botObj = TranslatorBot(TRANSLATOR_API_KEY, CICERON_TRANSLATOR_KEY)
+    botObj.main('!', chat_id, message_id, text_before, username, chat_type=chat_type, group_title=group_title)
+
+    return make_response(json.jsonify(result="ok"), 200)
+
 if __name__ == "__main__":
     from gevent.pywsgi import WSGIServer
     import ssl
@@ -199,8 +230,8 @@ if __name__ == "__main__":
     key = './cert/pfx.translator_ciceron_me.key'
     context.load_cert_chain(cert, key)
 
-    http_server = WSGIServer(('0.0.0.0', 8443), app, ssl_context=context)
-    #http_server = WSGIServer(('0.0.0.0', 8443), app)
+    #http_server = WSGIServer(('0.0.0.0', 8443), app, ssl_context=context)
+    http_server = WSGIServer(('0.0.0.0', 8443), app)
     http_server.serve_forever()
     # Should be masked!
     #app.run(host="0.0.0.0", port=80)
