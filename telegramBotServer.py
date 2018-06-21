@@ -230,8 +230,8 @@ if __name__ == "__main__":
     key = './cert/pfx.translator_ciceron_me.key'
     context.load_cert_chain(cert, key)
 
-    #http_server = WSGIServer(('0.0.0.0', 8443), app, ssl_context=context)
-    http_server = WSGIServer(('0.0.0.0', 8443), app)
+    http_server = WSGIServer(('0.0.0.0', 8443), app, ssl_context=context)
+    #http_server = WSGIServer(('0.0.0.0', 8443), app)
     http_server.serve_forever()
     # Should be masked!
     #app.run(host="0.0.0.0", port=80)
