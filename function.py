@@ -211,7 +211,8 @@ class TelegramBotAction(object):
         else:
             message = "Oops! There is no source sentence that matching language.\nPlease call @langchainbot for translation, then source sentence will be gathered!".format(target_lang)
 
-        self._sendNormalMessage(chat_id, message)
+        keyboard = self.normalKeyvoardSetting()
+        self._sendWithData(chat_id, message, params=keyboard)
 
     def clearLastSourceTextId(self, text_id):
         payloads = {
