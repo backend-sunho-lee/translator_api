@@ -116,6 +116,7 @@ def webHook(auth_key):
         if username is None or username == "":
             message = "Oops! You've not set your Telegram username.\nPlease go to *[menu -> Setting -> Username]*, set your username, and type '/start' again."
             actionCtrl._sendNormalMessage(chat_id, message)
+            return make_response("OK", 200)
 
         if sentence is None:
             message = "Currently we only take text data!\nYour interest and invenstment will be our fuel to develop useful tool such as OCR contributor or text extractor from sound!"
