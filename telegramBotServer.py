@@ -111,7 +111,7 @@ def webHook(auth_key):
         message_obj = telegram_update['message']
         chat_id = message_obj['chat']['id']
         sentence = message_obj.get('text')
-        username = message_obj['from']['username']
+        username = message_obj['from'].get('username')
 
         if username is None or username == "":
             message = "Oops! You've not set your Telegram username.\nPlease go to *[menu -> Setting -> Username]*, set your username, and type '/start' again."
