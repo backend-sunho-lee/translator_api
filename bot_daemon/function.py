@@ -62,10 +62,11 @@ class TelegramBotAction(object):
                 break
 
 
-    def _getId(self, text_id, chat_id=None):
+    def _getId(self, id_external, chat_id=None, text_id=None):
         payloads = {
                 "media": "telegram"
               , "text_id": text_id
+              , "id_external": id_external
                 }
         if chat_id != None:
             payloads['chat_id'] = chat_id
@@ -80,15 +81,24 @@ class TelegramBotAction(object):
         ret = resp.json()
         return ret
     
-    def newUser(self, chat_id, text_id):
-        ret = self._getId(text_id, chat_id)
+    def crawlUpdate(self, offset):
+        apiEndpoint_update = "https://api.telegram.org/bot{}/getUpdates".format(self.api_key)
+
+        payload = {"offset": offset}
+        resp = requests.post(apiEndpoint_update, data=payload)
+        data = resp.json()
+        return data['result']
+
+    def newUser(self, chat_id, id_external, text_id=None):
+        ret = self._getId(id_external, chat_id=chat_id, text_id=text_id)
         message_success = "Thanks to be a trainer of our LangChain translator!\nYou may start to do it after setting your language!"
         self._sendNormalMessage(chat_id, message_success)
 
-    def setSourceLanguage(self, chat_id, user_id, lang):
+    def setSourceLanguage(self, chat_id, id_external, lang, user_id=None):
         payloads = {
                 "media": "telegram"
               , "text_id": user_id
+              , "id_external": id_external
               , "language": lang
                 }
         try:
@@ -98,11 +108,12 @@ class TelegramBotAction(object):
             self._sendNormalMessage(chat_id, message_fail)
             return
 
-    def setTargetLanguage(self, chat_id, user_id, lang):
+    def setTargetLanguage(self, chat_id, id_external, lang, user_id=None):
         payloads = {
                 "media": "telegram"
               , "text_id": user_id
               , "language": lang
+              , "id_external": id_external
                 }
         try:
             resp = requests.post("{}/api/v1/setTargetLanguage".format(self.domain), data=payloads, timeout=5)
@@ -174,17 +185,18 @@ class TelegramBotAction(object):
                   }
                 }
 
-    def checkBalance(self, chat_id, text_id):
-        ret = self._getId(text_id)
+    def checkBalance(self, chat_id, id_external, text_id=None):
+        ret = self._getId(id_external, chat_id=chat_id, text_id=text_id)
         balances = ret['point']
+        print(balances)
 
         message = "Here is your points!\nThanks for your contribution!\n\n"
         for item in balances:
             message += "{} -> {}: *{}* Points\n".format(item['source_lang'], item['target_lang'], item['point'])
         self._sendNormalMessage(chat_id, message)
 
-    def getSentence(self, chat_id, text_id):
-        ret = self._getId(text_id)
+    def getSentence(self, chat_id, id_external, text_id=None):
+        ret = self._getId(id_external, chat_id=chat_id, text_id=text_id)
         source_lang = ret.get('source_lang')
         target_lang = ret.get('target_lang')
 
@@ -192,6 +204,7 @@ class TelegramBotAction(object):
                 "languages": source_lang
               , "media": "telegram"
               , "text_id": text_id
+              , "id_external": id_external
                 }
         try:
             resp = requests.get("{}/api/v1/getSentence".format(self.domain), params=payloads, timeout=5)
@@ -214,21 +227,23 @@ class TelegramBotAction(object):
         keyboard = self.normalKeyvoardSetting()
         self._sendWithData(chat_id, message, params=keyboard)
 
-    def clearLastSourceTextId(self, text_id):
+    def clearLastSourceTextId(self, id_external, text_id=None):
         payloads = {
                 "media": "telegram"
               , "text_id": text_id
+              , "id_external": id_external
                 }
         try:
             resp = requests.post("{}/api/v1/clearLastSentence".format(self.domain), data=payloads, timeout=5)
         except:
             return
 
-    def inputSentence(self, chat_id, text_id,
+    def inputSentence(self, chat_id, id_external,
             target_text,
+            text_id=None,
             tags=""):
 
-        ret = self._getId(text_id)
+        ret = self._getId(id_external, chat_id=chat_id, text_id=text_id)
 
         original_text_id = ret['last_original_text_id']
         if original_text_id is None:
@@ -239,7 +254,8 @@ class TelegramBotAction(object):
         payload = {
               "original_text_id": original_text_id
             , "contributor_media": "telegram"
-            , "contributor_text_id": text_id
+            , "contributor_text_id": text_id # Legacy
+            , "contributor_external_id": id_external
             , "target_lang": ret['target_lang']
             , "target_text": target_text
             , "tags": tags
@@ -253,7 +269,7 @@ class TelegramBotAction(object):
             self._sendNormalMessage(chat_id, message_fail)
             return
 
-        ret = self._getId(text_id)
+        ret = self._getId(id_external, chat_id=chat_id, text_id=text_id)
         point_array = ret['point']
         showing_point = 0.0
         for item in point_array:

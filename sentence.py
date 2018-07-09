@@ -185,16 +185,17 @@ class Sentences(object):
 
         return True
 
-    def clearLastSentenceId(self, conn, media, text_id):
+    def clearLastSentenceId(self, conn, media, id_external, text_id=None):
         cursor = conn.cursor()
 
         query_updateId = """
             UPDATE users
-              SET last_original_text_id = %s
-            WHERE media = %s AND text_id = %s
+              SET last_original_text_id = %s,
+                  text_id = %s
+            WHERE media = %s AND id_external = %s
         """
         try:
-            cursor.execute(query_updateId, (None, media, text_id, ))
+            cursor.execute(query_updateId, (None, text_id, media, id_external, ))
         except:
             traceback.print_exc()
             conn.rollback()
@@ -204,7 +205,7 @@ class Sentences(object):
         return True
 
 
-    def getOneSentences(self, conn, media, text_id, language):
+    def getOneSentences(self, conn, media, id_external, language, text_id=None):
         cursor = conn.cursor()
         query = """
             SELECT * FROM origin_text_users
@@ -218,11 +219,12 @@ class Sentences(object):
 
         query_updateId = """
             UPDATE users
-              SET last_original_text_id = %s
-            WHERE media = %s AND text_id = %s
+              SET last_original_text_id = %s,
+                  text_id = %s
+            WHERE media = %s AND id_external = %s
         """
         try:
-            cursor.execute(query_updateId, (ret['id'], media, text_id, ))
+            cursor.execute(query_updateId, (ret['id'], text_id, media, int(id_external), ))
         except:
             traceback.print_exc()
             conn.rollback()
@@ -249,6 +251,7 @@ class Sentences(object):
         origin_text = ret['text']
         origin_tag = ret['tag']
         origin_where_contributed = ret['where_contributed']
+        origin_contributor_id_external = ret['contributor_id_external']
 
         is_ok = self._markAsTranslated(conn, original_text_id)
 
@@ -271,5 +274,5 @@ class Sentences(object):
 
         last_id = ret['last_id']
 
-        return 0, last_id, original_contributor_id, original_contributor_media, original_contributor_text_id, origin_lang, origin_text, origin_tag, origin_where_contributed
+        return 0, last_id, original_contributor_id, original_contributor_media, original_contributor_text_id, origin_lang, origin_text, origin_tag, origin_where_contributed, origin_contributor_id_external
 

@@ -1,8 +1,17 @@
 import traceback
 
 class Users(object):
-    def _getId(self, conn, media, text_id):
+    def _getId(self, conn, media, id_external, text_id=None):
         cursor = conn.cursor()
+
+        # Will be activated
+        #query = """
+        #    SELECT * FROM users
+        #    WHERE 
+        #          media = %s
+        #      AND id_external = %s
+        #"""
+
         query = """
             SELECT * FROM users
             WHERE 
@@ -10,18 +19,33 @@ class Users(object):
               AND text_id = %s
         """
         cursor.execute(query, (media, text_id, ))
-        return cursor.fetchone()
+        ret = cursor.fetchone()
+        if ret is None or len(ret) < 1:
+            return None
 
-    def _setId(self, conn, media, text_id):
+        # Will be deleted later
+        query_update = """
+            UPDATE users
+            SET id_external = %s
+            WHERE
+                  media = %s
+              AND text_id = %s
+        """
+        cursor.execute(query_update, (id_external, media, text_id, ))
+        conn.commit()
+
+        return ret
+
+    def _setId(self, conn, media, id_external, text_id=None):
         cursor = conn.cursor()
         query = """
             INSERT INTO users
-              (media, text_id, point, created_at)
+              (media, text_id, point, created_at, id_external)
             VALUES
-              (%s, %s, 0, CURRENT_TIMESTAMP)
+              (%s, %s, 0, CURRENT_TIMESTAMP, %s)
         """
         try:
-            cursor.execute(query, (media, text_id, ))
+            cursor.execute(query, (media, text_id, id_external, ))
         except:
             traceback.print_exc()
             conn.rollback()
@@ -47,10 +71,10 @@ class Users(object):
         ret = cursor.fetchall()
         return ret
 
-    def getId(self, conn, media, text_id):
-        ret = self._getId(conn, media, text_id)
+    def getId(self, conn, media, id_external, text_id=None):
+        ret = self._getId(conn, media, id_external, text_id)
         if ret is None or len(ret) < 1:
-            is_ok, user_id = self._setId(conn, media, text_id)
+            is_ok, user_id = self._setId(conn, media, id_external, text_id)
             return {
                     "is_new": True
                   , "user_id": user_id
@@ -63,6 +87,7 @@ class Users(object):
                   , "last_original_text_id": None
                   , "chat_id": None
                   , "point": []
+                  , 'id_external': None
                     }
 
         else:
@@ -78,11 +103,13 @@ class Users(object):
                   , "chat_id": ret['chat_id']
                   , "last_original_text_id": ret['last_original_text_id']
                   , "point": self._getPoint(conn, ret['id'])
+                  , "id_external": ret['id_external']
                     }
 
-    def getPoint(self, conn, media, text_id, source_lang, target_lang, point):
+    def getPoint(self, conn, media, id_external, source_lang, target_lang, point, text_id=None):
+        ret = self._getId(conn, media, id_external, text_id)
         cursor = conn.cursor()
-        user_obj = self.getId(conn, media, text_id)
+        user_obj = self.getId(conn, media, id_external, text_id)
         query = """
             INSERT INTO points
               (user_id, source_lang, target_lang, point)
@@ -101,17 +128,19 @@ class Users(object):
         return True
 
 
-    def setLanguage(self, conn, media, text_id, languages):
+    def setLanguage(self, conn, media, id_external, languages, text_id=None):
+        ret = self._getId(conn, media, id_external, text_id)
         cursor = conn.cursor()
         query = """
             UPDATE users
-              SET languages = %s
+              SET languages = %s,
+                  text_id = %s
             WHERE media = %s
-              AND text_id = %s
+              AND id_external = %s
         """
         
         try:
-            cursor.execute(query, (languages, media, text_id, ))
+            cursor.execute(query, (languages, text_id, media, id_external, ))
         except:
             traceback.print_exc()
             conn.rollback()
@@ -120,17 +149,19 @@ class Users(object):
         conn.commit()
         return True
 
-    def setSourceLanguage(self, conn, media, text_id, source_lang):
+    def setSourceLanguage(self, conn, media, id_external, source_lang, text_id=None):
+        ret = self._getId(conn, media, id_external, text_id)
         cursor = conn.cursor()
         query = """
             UPDATE users
-              SET source_lang = %s
+              SET source_lang = %s,
+                  text_id = %s
             WHERE media = %s
-              AND text_id = %s
+              AND id_external = %s
         """
         
         try:
-            cursor.execute(query, (source_lang, media, text_id, ))
+            cursor.execute(query, (source_lang, text_id, media, id_external, ))
         except:
             traceback.print_exc()
             conn.rollback()
@@ -139,17 +170,19 @@ class Users(object):
         conn.commit()
         return True
 
-    def setTargetLanguage(self, conn, media, text_id, target_lang):
+    def setTargetLanguage(self, conn, media, id_external, target_lang, text_id=None):
+        ret = self._getId(conn, media, id_external, text_id)
         cursor = conn.cursor()
         query = """
             UPDATE users
-              SET target_lang = %s
+              SET target_lang = %s,
+                  text_id = %s
             WHERE media = %s
-              AND text_id = %s
+              AND id_external = %s
         """
         
         try:
-            cursor.execute(query, (target_lang, media, text_id, ))
+            cursor.execute(query, (target_lang, text_id, media, id_external, ))
         except:
             traceback.print_exc()
             conn.rollback()
@@ -158,17 +191,19 @@ class Users(object):
         conn.commit()
         return True
 
-    def setChatId(self, conn, media, text_id, chat_id):
+    def setChatId(self, conn, media, id_external, chat_id, text_id=None):
+        ret = self._getId(conn, media, id_external, text_id)
         cursor = conn.cursor()
         query = """
             UPDATE users
-              SET chat_id = %s
+              SET chat_id = %s,
+                  text_id = %s
             WHERE media = %s
-              AND text_id = %s
+              AND id_external = %s
         """
         
         try:
-            cursor.execute(query, (chat_id, media, text_id, ))
+            cursor.execute(query, (chat_id, text_id, media, id_external, ))
         except:
             traceback.print_exc()
             conn.rollback()
@@ -177,11 +212,12 @@ class Users(object):
         conn.commit()
         return True
 
-    def setAuthCode(self, conn, media, text_id):
+    def setAuthCode(self, conn, media, id_external, text_id=None):
+        ret = self._getId(conn, media, id_external, text_id)
         from random import randint
 
         code = randint(100000, 999999)
-        user_obj = self._getId(conn, media, text_id)
+        user_obj = self._getId(conn, media, id_external, text_id)
         chat_id = user_obj.get('chat_id')
         if chat_id == None:
             return False, None, None
@@ -203,8 +239,9 @@ class Users(object):
         conn.commit()
         return True, code, chat_id
 
-    def checkAuthCode(self, conn, media, text_id, code):
-        user_obj = self._getId(conn, media, text_id)
+    def checkAuthCode(self, conn, media, id_external, code, text_id=None):
+        ret = self._getId(conn, media, id_external, text_id)
+        user_obj = self._getId(conn, media, id_external, text_id)
         chat_id = user_obj['chat_id']
         cursor = conn.cursor()
         query_check = """
