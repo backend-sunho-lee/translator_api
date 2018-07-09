@@ -57,14 +57,24 @@ Session(app)
 cors = CORS(app, resources={r"/*": {"origins": "*", "supports_credentials": "true"}})
 translator = Translator(GCM_API_KEY, BING_KEY)
 
-class dotdict(dict):
-    """dot.notation access to dictionary attributes"""
-    __getattr__ = dict.get
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
-
 def connect_db():
     return pymysql.connect(host=DATABASE['host'], user=DATABASE['user'], password=DATABASE['password'], db=DATABASE['db'], charset='utf8', cursorclass=pymysql.cursors.DictCursor)
+
+def sendNormalMessage(chat_id, message):
+    apiEndpoint_send = "https://api.telegram.org/bot{}/sendMessage".format(BOT_API_KEY)
+    payload = { 
+                  "chat_id": chat_id
+                , "text": message
+                , "parse_mode": "Markdown"
+              } 
+    for _ in range(100):
+        try:
+            resp = requests.post(apiEndpoint_send, data=payload, timeout=5)
+        except:
+            continue
+
+        if resp.status_code == 200:
+            break
 
 @app.before_request
 def before_request():
@@ -166,16 +176,10 @@ def setAuthCode():
     if is_ok == False:
         return make_response(json.jsonify(result="fail"), 410)
 
-    try:
-        from function import TelegramBotAction
-    except:
-        from .function import TelegramBotAction
-
-    actionCtrl = TelegramBotAction(BOT_API_KEY)
     message  = "External login request!\n"
     message += "Please input following code:\n\n"
     message += "*{}*".format(code)
-    actionCtrl._sendNormalMessage(chat_id, message)
+    sendNormalMessage(chat_id, message)
 
     return make_response(json.jsonify(result="ok"), 200)
 
@@ -191,12 +195,6 @@ def checkAuthCode():
     sentenceObj = Sentences()
     ret = sentenceObj.clearLastSentenceId( conn, media, id_external, text_id )
     is_ok, chat_id = userObj.checkAuthCode(conn, media, id_external, code, text_id)
-    try:
-        from function import TelegramBotAction
-    except:
-        from .function import TelegramBotAction
-
-    actionCtrl = TelegramBotAction(BOT_API_KEY)
 
     if is_ok == True:
         session['checked'] = True
@@ -204,13 +202,13 @@ def checkAuthCode():
         session['id_external'] = id_external
 
         message  = "✅ Successfully authenticated!"
-        actionCtrl._sendNormalMessage(chat_id, message)
+        sendNormalMessage(chat_id, message)
 
         return make_response(json.jsonify(result="ok"), 200)
 
     else:
         message  = "❌ Wrong authentication trial is detected!"
-        actionCtrl._sendNormalMessage(chat_id, message)
+        sendNormalMessage(chat_id, message)
 
         return make_response(json.jsonify(result="fail"), 403)
 
