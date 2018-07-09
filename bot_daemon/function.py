@@ -188,7 +188,6 @@ class TelegramBotAction(object):
     def checkBalance(self, chat_id, id_external, text_id=None):
         ret = self._getId(id_external, chat_id=chat_id, text_id=text_id)
         balances = ret['point']
-        print(balances)
 
         message = "Here is your points!\nThanks for your contribution!\n\n"
         for item in balances:

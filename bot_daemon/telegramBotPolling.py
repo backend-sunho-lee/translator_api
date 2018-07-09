@@ -61,7 +61,6 @@ class TrainerBot(object):
                 sentence = message_obj.get('text')
                 username = message_obj['from'].get('username')
                 id_external = message_obj['from'].get('id')
-                print(id_external)
     
                 #if username is None or username == "":
                 #    message = "Oops! You've not set your Telegram username.\nPlease go to *[menu -> Setting -> Username]*, set your username, and type '/start' again."
@@ -69,10 +68,12 @@ class TrainerBot(object):
                 #    return make_response("OK", 200)
     
                 if sentence is None:
+                    print("{} | {} | Multimedia Error".format(id_external, username))
                     message = "Currently we only take text data!\nYour interest and invenstment will be our fuel to develop useful tool such as OCR contributor or text extractor from sound!"
                     actionCtrl._sendNormalMessage(chat_id, message)
     
                 elif sentence == '/start':
+                    print("{} | {} | New user".format(id_external, username))
                     actionCtrl.newUser(chat_id, id_external, username)
                     actionCtrl.clearLastSourceTextId(id_external, username)
     
@@ -82,13 +83,16 @@ class TrainerBot(object):
                     actionCtrl._sendWithData(chat_id, message, params=data)
     
                 elif sentence == 'Balance':
+                    print("{} | {} | Balance check".format(id_external, username))
                     actionCtrl.clearLastSourceTextId(id_external, username)
                     actionCtrl.checkBalance(chat_id, id_external, username)
     
                 elif sentence == 'Translate':
+                    print("{} | {} | Get sentence".format(id_external, username))
                     actionCtrl.getSentence(chat_id, id_external, text_id=username)
     
                 elif sentence == 'Set Language':
+                    print("{} | {} | Set language".format(id_external, username))
                     actionCtrl.clearLastSourceTextId(id_external, text_id=username)
                     ret = actionCtrl._getId(id_external, text_id=username)
                     message = "Current setting: *{}* -> *{}*\n\nWhich language do you want to traslate from?".format(ret['source_lang'], ret['target_lang'])
@@ -96,6 +100,7 @@ class TrainerBot(object):
                     actionCtrl._sendWithData(chat_id, message, params=data)
     
                 else:
+                    print("{} | {} | Set language".format(id_external, username))
                     ret = actionCtrl._getId(id_external, text_id=username)
                     # Translated sentence will input
                     actionCtrl.inputSentence(chat_id, id_external, sentence, text_id=username, tags="telegram")
@@ -117,6 +122,7 @@ class TrainerBot(object):
                 lang = data_arr[1]
     
                 if seq == '1st':
+                    print("{} | {} | Choose first language".format(id_external, username))
                     ret = actionCtrl._getId(id_external, text_id=username)
                     # Store
                     actionCtrl.setSourceLanguage(chat_id, id_external, lang, username)
@@ -128,6 +134,7 @@ class TrainerBot(object):
                     actionCtrl._sendWithData(chat_id, message, params=data)
     
                 elif seq == '2nd':
+                    print("{} | {} | Choose second language".format(id_external, username))
                     ret = actionCtrl._getId(username, text_id=username)
                     # Store
                     actionCtrl.setTargetLanguage(chat_id, id_external, lang, username)
