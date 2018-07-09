@@ -121,7 +121,6 @@ def translateInternal():
 @app.route('/api/v2/external/translate', methods=['POST'])
 def translateExternal():
     conn = connect_db()
-    conn = None
 
     auth_key = request.headers.get('Authorization', None)
     if auth_key is None or auth_key == "":
