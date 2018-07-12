@@ -115,7 +115,7 @@ class TrainerBot(object):
     
                 chat_id = message_obj['chat']['id']
                 query_id = query_obj['id']
-                username = query_obj['from']['username']
+                username = query_obj['from'].get('username')
                 id_external = query_obj['from'].get('id')
                 data_arr = query_obj['data'].split('|')
                 actionCtrl.clearLastSourceTextId(id_external, text_id=username)

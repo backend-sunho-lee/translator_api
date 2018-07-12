@@ -5,34 +5,34 @@ class Users(object):
         cursor = conn.cursor()
 
         # Will be activated
-        #query = """
-        #    SELECT * FROM users
-        #    WHERE 
-        #          media = %s
-        #      AND id_external = %s
-        #"""
-
         query = """
             SELECT * FROM users
             WHERE 
                   media = %s
-              AND text_id = %s
+              AND id_external = %s
         """
-        cursor.execute(query, (media, text_id, ))
+
+        #query = """
+        #    SELECT * FROM users
+        #    WHERE 
+        #          media = %s
+        #      AND text_id = %s
+        #"""
+        cursor.execute(query, (media, id_external, ))
         ret = cursor.fetchone()
         if ret is None or len(ret) < 1:
             return None
 
         # Will be deleted later
-        query_update = """
-            UPDATE users
-            SET id_external = %s
-            WHERE
-                  media = %s
-              AND text_id = %s
-        """
-        cursor.execute(query_update, (id_external, media, text_id, ))
-        conn.commit()
+        #query_update = """
+        #    UPDATE users
+        #    SET id_external = %s
+        #    WHERE
+        #          media = %s
+        #      AND text_id = %s
+        #"""
+        #cursor.execute(query_update, (id_external, media, text_id, ))
+        #conn.commit()
 
         return ret
 
