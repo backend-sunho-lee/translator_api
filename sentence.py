@@ -207,7 +207,6 @@ class Sentences(object):
         conn.commit()
         return True
 
-
     def getOneSentences(self, conn, media, id_external, language, text_id=None):
         cursor = conn.cursor()
         query = """
