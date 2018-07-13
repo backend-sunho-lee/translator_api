@@ -213,7 +213,8 @@ class Sentences(object):
             SELECT * FROM origin_text_users
             WHERE language = %s
               AND is_translated = false
-            ORDER BY contributed_at DESC
+            -- ORDER BY contributed_at DESC
+            ORDER BY RAND()
             LIMIT 1
         """
         cursor.execute(query, (language, ))

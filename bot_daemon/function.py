@@ -197,7 +197,6 @@ class TelegramBotAction(object):
         ret = self._getId(id_external, chat_id=chat_id, text_id=text_id)
         source_lang = ret.get('source_lang')
         target_lang = ret.get('target_lang')
-        print(ret)
 
         if None in [source_lang, target_lang]:
             message = "❗️ Please 'Set Language' first."
