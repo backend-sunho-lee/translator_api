@@ -61,7 +61,6 @@ class TelegramBotAction(object):
             if resp.status_code == 200:
                 break
 
-
     def _getId(self, id_external, chat_id=None, text_id=None):
         payloads = {
                 "media": "telegram"
@@ -198,6 +197,17 @@ class TelegramBotAction(object):
         ret = self._getId(id_external, chat_id=chat_id, text_id=text_id)
         source_lang = ret.get('source_lang')
         target_lang = ret.get('target_lang')
+
+        if None in [source_lang, target_lang]:
+            message = "❗️ Please 'Set Language' first."
+            keyboard = self.normalKeyvoardSetting()
+            self._sendWithData(chat_id, message, params=keyboard)
+            return
+        elif source_lang == target_lang:
+            message = "❗️ Setting Error. Please 'Set Language' again."
+            keyboard = self.normalKeyvoardSetting()
+            self._sendWithData(chat_id, message, params=keyboard)
+            return
 
         payloads = {
                 "languages": source_lang
