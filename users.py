@@ -4,6 +4,17 @@ class Users(object):
     def _getId(self, conn, media, id_external, text_id=None):
         cursor = conn.cursor()
 
+        if media == 'mycat':
+            if id_external and text_id is None:
+                email = id_external
+            else:
+                email = text_id
+            query = """SELECT u.id, ru.text_id, eos_id, 'mycat' as media, languages, source_lang, target_lang, chat_id, last_original_text_id, point, id_external
+                       FROM real_users ru JOIN users u ON u.real_user_id = ru.id WHERE ru.text_id=%s;"""
+            cursor.execute(query, (email, ))
+            ret = cursor.fetchone()
+            return ret
+
         # Will be activated
         #query = """
         #    SELECT * FROM users
@@ -97,13 +108,13 @@ class Users(object):
                   , "eos_id": ret['eos_id']
                   , "media": ret['media']
                   , "text_id": ret['text_id']
-                  , "languages": ret['languages']
-                  , "source_lang": ret['source_lang']
-                  , "target_lang": ret['target_lang']
-                  , "chat_id": ret['chat_id']
-                  , "last_original_text_id": ret['last_original_text_id']
+                  , "languages": ret.get('languages', None)
+                  , "source_lang": ret.get('source_lang', None)
+                  , "target_lang": ret.get('target_lang', None)
+                  , "chat_id": ret.get('chat_id', None)
+                  , "last_original_text_id": ret.get('last_original_text_id', None)
                   , "point": self._getPoint(conn, ret['id'])
-                  , "id_external": ret['id_external']
+                  , "id_external": ret.get('id_external', None)
                     }
 
     def getPoint(self, conn, media, id_external, source_lang, target_lang, point, text_id=None):

@@ -446,6 +446,7 @@ class Translator(object):
         
         userCtrl = UserCtrl()
         ret = userCtrl._getId(conn, media, order_user)
+
         order_user_id = 0
         if ret is None or len(ret) < 1:
             order_user_id = 0
