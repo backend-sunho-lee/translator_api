@@ -193,7 +193,8 @@ class Sentences(object):
         query_updateId = """
             UPDATE users
               SET last_original_text_id = %s,
-                  text_id = %s
+                  text_id = %s,
+                  last_connected_time = CURRENT_TIMESTAMP 
             WHERE media = %s AND id_external = %s
         """
         try:
@@ -222,7 +223,8 @@ class Sentences(object):
         query_updateId = """
             UPDATE users
               SET last_original_text_id = %s,
-                  text_id = %s
+                  text_id = %s,
+                  last_connected_time = CURRENT_TIMESTAMP 
             WHERE media = %s AND id_external = %s
         """
         try:
