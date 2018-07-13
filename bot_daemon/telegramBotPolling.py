@@ -21,8 +21,10 @@ with open('../config.json', 'r') as f:
 DATABASE = conf['db']
 BOT_API_KEY = conf['telegram']['trainer']
 
+
 def connect_db():
     return pymysql.connect(host=DATABASE['host'], user=DATABASE['user'], password=DATABASE['password'], db=DATABASE['db'], charset='utf8', cursorclass=pymysql.cursors.DictCursor)
+
 
 class TrainerBot(object):
     def __init__(self):
@@ -161,6 +163,7 @@ class TrainerBot(object):
         if len(updated_obj) > 0:
             self._writeUpdate(new_lastUpdate_id+1)
             updated_obj = actionCtrl.crawlUpdate(lastUpdate_id+1)
+
 
 if __name__ == "__main__":
     trainerBot = TrainerBot()

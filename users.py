@@ -1,5 +1,6 @@
 import traceback
 
+
 class Users(object):
     def _getId(self, conn, media, id_external, text_id=None):
         cursor = conn.cursor()
@@ -51,9 +52,9 @@ class Users(object):
         cursor = conn.cursor()
         query = """
             INSERT INTO users
-              (media, text_id, point, created_at, id_external)
+              (media, text_id, point, created_at, id_external, last_connected_time)
             VALUES
-              (%s, %s, 0, CURRENT_TIMESTAMP, %s)
+              (%s, %s, 0, CURRENT_TIMESTAMP, %s, CURRENT_TIMESTAMP)
         """
         try:
             cursor.execute(query, (media, text_id, id_external, ))
@@ -138,14 +139,14 @@ class Users(object):
         conn.commit()
         return True
 
-
     def setLanguage(self, conn, media, id_external, languages, text_id=None):
         ret = self._getId(conn, media, id_external, text_id)
         cursor = conn.cursor()
         query = """
             UPDATE users
               SET languages = %s,
-                  text_id = %s
+                  text_id = %s,
+                  last_connected_time = CURRENT_TIMESTAMP 
             WHERE media = %s
               AND id_external = %s
         """
@@ -166,7 +167,8 @@ class Users(object):
         query = """
             UPDATE users
               SET source_lang = %s,
-                  text_id = %s
+                  text_id = %s,
+                  last_connected_time = CURRENT_TIMESTAMP 
             WHERE media = %s
               AND id_external = %s
         """
@@ -187,7 +189,8 @@ class Users(object):
         query = """
             UPDATE users
               SET target_lang = %s,
-                  text_id = %s
+                  text_id = %s,
+                  last_connected_time = CURRENT_TIMESTAMP 
             WHERE media = %s
               AND id_external = %s
         """
@@ -208,7 +211,8 @@ class Users(object):
         query = """
             UPDATE users
               SET chat_id = %s,
-                  text_id = %s
+                  text_id = %s,
+                  last_connected_time = CURRENT_TIMESTAMP 
             WHERE media = %s
               AND id_external = %s
         """
