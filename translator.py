@@ -446,6 +446,7 @@ class Translator(object):
         
         userCtrl = UserCtrl()
         ret = userCtrl._getId(conn, media, order_user)
+
         order_user_id = 0
         if ret is None or len(ret) < 1:
             order_user_id = 0
@@ -457,6 +458,7 @@ class Translator(object):
 
         for idx, sentence in enumerate(splitted_sentence):
             ret = self.findTranslation(conn, source_lang, target_lang, sentence)
+            original_text_id = ret[1]
 
             # 0: True, 
             # 1: original_text_id
@@ -476,18 +478,18 @@ class Translator(object):
 
             else:
                 sentenceCtrlObj = SentenceCtrl()
-                code, original_sentence_id = sentenceCtrlObj._inputOriginalSentence(conn, order_user_id, source_lang, sentence, where_contributed, tags)
+                code, original_text_id = sentenceCtrlObj._inputOriginalSentence(conn, order_user_id, source_lang, sentence, where_contributed, tags)
                 if code == 0:
                     is_ok = self.writeActionLog(conn, order_user_id, 0, source_lang, target_lang, 'origin_contribute', 1, 0)
                 elif code == 1:
                     # Duplicate origin lang contribution
                     # 태그 로직 반영되면 변경예정
                     pass
-
                 else:
                     return False, None
 
         is_ok, result = self.doWorkSingle(source_lang, target_lang, sentences)
+        result['original_text_id'] = original_text_id
 
         splitted_translated_sentence = []
         if (source_lang == 'ko' and target_lang == 'en') or (source_lang == 'en' and target_lang == 'ko'):
@@ -515,7 +517,6 @@ class Translator(object):
                 )
 
         is_ok = self.increaseCallCnt(conn, user_id)
-
         return is_ok, result
 
 

@@ -335,7 +335,7 @@ def inputTranslation():
     if request.form.get('contributor_external_id') is not None:
         contributor_id_external = int(request.form.get('contributor_external_id'))
     else:
-        contributor_id_external = int(session.get('id_external'))
+        contributor_id_external = session.get('id_external', None)
 
     print(contributor_id_external)
 
@@ -351,6 +351,75 @@ def inputTranslation():
 
     code, target_text_id, original_contributor_id, original_contributor_media, original_contributor_text_id, origin_lang, origin_text, origin_tag, origin_where_contributed, origin_id_external = sentenceObj.inputTranslation(conn, original_text_id, contributor_id, target_text, target_lang, where_contribute, tags)
 
+    if code == 0:
+        if original_contributor_id == 0:
+            is_ok = userObj.getPoint(conn, contributor_media, contributor_id_external, origin_lang, target_lang, 1.1, text_id=contributor_text_id)
+            is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'origin_contribute', 1, 0)
+            is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'target_contribute', 1, 0)
+            is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 0.1)
+            is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
+
+        else:
+            is_ok = userObj.getPoint(conn, original_contributor_media, origin_id_external, origin_lang, target_lang, 0.1, text_id=original_contributor_text_id)
+            is_ok = userObj.getPoint(conn, contributor_media, contributor_id_external, origin_lang, target_lang, 1, text_id=contributor_text_id)
+            is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'target_contribute', 1, 0)
+            is_ok = translator.writeActionLog(conn, original_contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 0.1)
+            is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
+
+        ret_data = translator.viewOneCompleteUnit(conn, target_text_id)
+
+        if ret_data is not None:
+            return make_response(json.jsonify(**ret_data), 200)
+        else:
+            return make_response(json.jsonify(result="nothing"), 200)
+
+    else:
+        return make_response(json.jsonify(result="nothing"), 200)
+
+@app.route('/api/v1/translation/mycat', methods=['POST'])
+def inputTranslation_from_mycat():
+    """
+    original_text_id: Int
+    contributor_media: mycat
+    contributor_email: 번역가 이메일
+    tags: mycat에서 문서 입력시 받는 tags
+    target_lang: 번역문 언어
+    target_text:String, 번역문
+    where_contribute:mycat
+    :return:
+    """
+    conn = connect_db()
+    original_text_id = request.form.get('original_text_id', None)
+
+    contributor_media = request.form.get('contributor_media', None)
+    contributor_text_id = request.form.get('contributor_text_id', None)
+    target_lang = request.form.get('target_lang', None)
+    target_text = request.form.get('target_text', None)
+    where_contribute = request.form.get('where_contribute', None)
+
+    tags = request.form.get('tags', None)
+
+    if None in [original_text_id, contributor_media, contributor_text_id, target_lang, target_text, where_contribute]:
+        error = {
+            "code": 2301,
+            "type": "NullValue",
+            "message": "something not entered. please check source_id and comment."
+        }
+        return make_response(json.jsonify(error=error), 422)
+
+    sentenceObj = Sentences()
+    userObj = Users()
+
+    contributor_user_id_obj = userObj._getId(conn, contributor_media, id_external=None, text_id=contributor_text_id)
+    contributor_id = 0
+    if contributor_user_id_obj is None or len(contributor_user_id_obj) < 1:
+        contributor_id = 0
+    else:
+        contributor_id = contributor_user_id_obj['id']
+
+    code, target_text_id, original_contributor_id, original_contributor_media, original_contributor_text_id, origin_lang, origin_text, origin_tag, origin_where_contributed, origin_id_external = sentenceObj.inputTranslation(conn, original_text_id, contributor_id, target_text, target_lang, where_contribute, tags)
+
+    contributor_id_external = contributor_user_id_obj['id_external']
     if code == 0:
         if original_contributor_id == 0:
             is_ok = userObj.getPoint(conn, contributor_media, contributor_id_external, origin_lang, target_lang, 1.1, text_id=contributor_text_id)

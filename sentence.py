@@ -52,8 +52,10 @@ class Sentences(object):
             cursor.execute(query, (contributor_id, language, text, tags, text, where_contributed, ))
 
         except pymysql.err.IntegrityError:
+            cursor.execute("""SELECT id as original_text_id FROM langchain.origin_texts WHERE text=%s;""", (text, ))
+            ret = cursor.fetchone()
             print("Duplicate sentence {}".format(text))
-            return 1, None
+            return 1, ret['original_text_id']
 
         except:
             traceback.print_exc()
