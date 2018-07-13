@@ -324,7 +324,7 @@ def inputTranslation():
     original_text_id = request.form['original_text_id']
 
     contributor_media = request.form['contributor_media']
-    contributor_text_id = request.form.get('contributor_text_id', None)
+    contributor_text_id = request.form.get('contributor_text_id')
     target_lang = request.form['target_lang']
     target_text = request.form['target_text']
 
