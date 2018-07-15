@@ -86,7 +86,8 @@ class TelegramBotAction(object):
         payload = {"offset": offset}
         resp = requests.post(apiEndpoint_update, data=payload)
         data = resp.json()
-        return data['result']
+        ret = data.get('result', [])
+        return ret
 
     def newUser(self, chat_id, id_external, text_id=None):
         ret = self._getId(id_external, chat_id=chat_id, text_id=text_id)
