@@ -212,6 +212,7 @@ class TelegramBotAction(object):
 
         payloads = {
                 "languages": source_lang
+              , "target_lang": target_lang
               , "media": "telegram"
               , "text_id": text_id
               , "id_external": id_external

@@ -298,12 +298,13 @@ def getSentence():
     conn = connect_db()
 
     languages = request.args.get('languages', 'en')
+    target_lang = request.args.get('target_lang', 'ko')
     media = request.args.get('media', 'web')
     id_external = request.args.get('id_external')
     text_id = request.args.get('text_id', 'anonymous')
 
     sentenceObj = Sentences()
-    ret = sentenceObj.getOneSentences( conn, media, id_external, languages, text_id )
+    ret = sentenceObj.getOneSentences( conn, media, id_external, languages, target_lang=target_lang, text_id=text_id )
     ret = ret if ret is not None else {}
 
     return make_response(json.jsonify(

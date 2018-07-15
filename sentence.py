@@ -207,16 +207,9 @@ class Sentences(object):
         conn.commit()
         return True
 
-    def getOneSentences(self, conn, media, id_external, language, text_id=None):
+    def getOneSentences(self, conn, media, id_external, origin_lang, target_lang=None, text_id=None):
         cursor = conn.cursor()
         query = """
-            -- SELECT * FROM origin_text_users
-            -- WHERE language = %s
-            --   AND is_translated = false
-            -- -- ORDER BY contributed_at DESC
-            -- ORDER BY RAND()
-            -- LIMIT 1
-
             SELECT *
             FROM origin_text_users
             WHERE language = %s
@@ -233,7 +226,7 @@ class Sentences(object):
             ORDER BY RAND()
             LIMIT 1
         """
-        cursor.execute(query, (language, ))
+        cursor.execute(query, (origin_lang, target_lang, ))
         ret = cursor.fetchone()
 
         query_updateId = """
