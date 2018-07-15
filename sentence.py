@@ -210,10 +210,26 @@ class Sentences(object):
     def getOneSentences(self, conn, media, id_external, language, text_id=None):
         cursor = conn.cursor()
         query = """
-            SELECT * FROM origin_text_users
+            -- SELECT * FROM origin_text_users
+            -- WHERE language = %s
+            --   AND is_translated = false
+            -- -- ORDER BY contributed_at DESC
+            -- ORDER BY RAND()
+            -- LIMIT 1
+
+            SELECT *
+            FROM origin_text_users
             WHERE language = %s
-              AND is_translated = false
-            -- ORDER BY contributed_at DESC
+                 AND id NOT IN (
+                            SELECT origin_text_id 
+                            FROM (
+                                  SELECT origin_text_id, count(*) AS cnt 
+                                  FROM target_text_users
+                                  WHERE language = %s
+                                 GROUP BY origin_text_id
+                                       ) tmp
+                            WHERE cnt >= 1
+                          )
             ORDER BY RAND()
             LIMIT 1
         """
