@@ -190,7 +190,7 @@ class TelegramBotAction(object):
 
         message = "Here is your points!\nThanks for your contribution!\n\n"
         for item in balances:
-            message += "{} -> {}: *{}* Points\n".format(item['source_lang'], item['target_lang'], item['point'])
+            message += "{} → {}: *{}* Points\n".format(item['source_lang'], item['target_lang'], item['point'])
         self._sendNormalMessage(chat_id, message)
 
     def getSentence(self, chat_id, id_external, text_id=None):
@@ -275,19 +275,22 @@ class TelegramBotAction(object):
 
         try:
             resp = requests.post("{}/api/v1/inputTranslation".format(self.domain), data=payload, timeout=5)
+            data = resp.json()
+
+            # ret = self._getId(id_external, chat_id=chat_id, text_id=text_id)
+            # point_array = ret['point']
+            # showing_point = 0.0
+            # for item in point_array:
+            #     if item['source_lang'] == ret['source_lang'] \
+            #             and item['target_lang'] == ret['target_lang']:
+            #         showing_point = item['point']
+            #         break
+
+            message = "Thanks for your contribution!\n"
+            message += "You got *{}* point in {} → {} translation.".format(data['win_point'],
+                                                                           data['source_lang'], data['target_lang'])
+            self._sendNormalMessage(chat_id, message)
         except:
             message_fail = "There seems a trouble to execute it. Please try again!"
             self._sendNormalMessage(chat_id, message_fail)
             return
-
-        ret = self._getId(id_external, chat_id=chat_id, text_id=text_id)
-        point_array = ret['point']
-        showing_point = 0.0
-        for item in point_array:
-            if item['source_lang'] == ret['source_lang'] \
-                    and item['target_lang'] == ret['target_lang']:
-                showing_point = item['point']
-                break
-
-        message = "Thanks for your contribution!\nPoint: *{}* in {}->{} translation.".format(showing_point, ret['source_lang'], ret['target_lang'])
-        self._sendNormalMessage(chat_id, message)
