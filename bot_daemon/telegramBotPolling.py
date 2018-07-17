@@ -82,7 +82,7 @@ class TrainerBot(object):
                     actionCtrl.clearLastSourceTextId(id_external, username)
     
                     # Set source language
-                    message = "Which language do you want to traslate from?"
+                    message = "Which language do you want to translate from?"
                     data = actionCtrl.languageSelect()
                     actionCtrl._sendWithData(chat_id, message, params=data)
     
@@ -99,7 +99,7 @@ class TrainerBot(object):
                     print("{} | {} | {} | Set language".format(now, id_external, username))
                     actionCtrl.clearLastSourceTextId(id_external, text_id=username)
                     ret = actionCtrl._getId(id_external, text_id=username)
-                    message = "Current setting: *{}* -> *{}*\n\nWhich language do you want to traslate from?".format(ret['source_lang'], ret['target_lang'])
+                    message = "Current setting: *{}* -> *{}*\n\nWhich language do you want to translate from?".format(ret['source_lang'], ret['target_lang'])
                     data = actionCtrl.languageSelect()
                     actionCtrl._sendWithData(chat_id, message, params=data)
     
