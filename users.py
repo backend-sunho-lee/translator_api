@@ -17,12 +17,10 @@ class Users(object):
             return ret
 
         # Will be activated
-        query = """
-            SELECT * FROM users
-            WHERE 
-                  media = %s
-              AND id_external = %s
-        """
+        query = """SELECT * FROM users u
+                   JOIN (SELECT contributor_id, count(*) as sentence_cnt 
+                         FROM langchain.origin_texts GROUP BY contributor_id) t1 ON t1.contributor_id = u.id
+                   WHERE media = %s AND id_external = %s"""
 
         #query = """
         #    SELECT * FROM users
@@ -100,6 +98,7 @@ class Users(object):
                   , "chat_id": None
                   , "point": []
                   , 'id_external': None
+                  , "sentence_cnt": None
                     }
 
         else:
@@ -116,6 +115,7 @@ class Users(object):
                   , "last_original_text_id": ret.get('last_original_text_id', None)
                   , "point": self._getPoint(conn, ret['id'])
                   , "id_external": ret.get('id_external', None)
+                  , "sentence_cnt": ret.get('sentence_cnt', 0)
                     }
 
     def getPoint(self, conn, media, id_external, source_lang, target_lang, point, text_id=None):
