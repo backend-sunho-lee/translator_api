@@ -318,8 +318,16 @@ def getSentence():
 
 @app.route('/api/v1/inputTranslation', methods=['POST'])
 def inputTranslation():
-    if session.get('checked', False) == False and request.remote_addr != '127.0.0.1':
+    contributor_id_external = -1
+
+    if request.form.get('contributor_external_id') is not None:
+        contributor_id_external = int(request.form.get('contributor_external_id'))
+    elif session.get('id_external') != None:
+        contributor_id_external = session.get('id_external', None)
+    else:
         return make_response(json.jsonify(result="fail"), 403)
+
+    print(contributor_id_external)
 
     conn = connect_db()
     original_text_id = request.form['original_text_id']
@@ -332,13 +340,6 @@ def inputTranslation():
     tags = request.form.get('tags')
     where_contribute = request.form.get('where_contribute')
 
-    contributor_id_external = -1
-    if request.form.get('contributor_external_id') is not None:
-        contributor_id_external = int(request.form.get('contributor_external_id'))
-    else:
-        contributor_id_external = session.get('id_external', None)
-
-    print(contributor_id_external)
 
     sentenceObj = Sentences()
     userObj = Users()
