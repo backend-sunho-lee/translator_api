@@ -227,8 +227,10 @@ class TelegramBotAction(object):
             message = "Please translate this sentence into *{}*:\n\n".format(target_lang)
 
             message += "*{}*\n\n".format(ret['text'])
-            message += "Source media: {}\n".format(ret['where_contributed'])
-            message += "Tags: {}".format(ret.get('tag'))
+            message += "- Source media: {}\n".format(ret['where_contributed'])
+            message += "- Tags: {}".format(ret.get('tag'))
+
+            message += "\n\nThe point is recalled when abusing is detected.\nIf you want to skip this sentence, click translate button again."
 
         else:
             message = "Oops! There is no source sentence that matching language.\nPlease call @langchainbot for translation, then source sentence will be gathered!".format(target_lang)
