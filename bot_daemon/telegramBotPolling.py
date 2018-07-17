@@ -133,7 +133,7 @@ class TrainerBot(object):
                     actionCtrl._answerCallbackQuery(query_id)
     
                     # Ask 2nd lang
-                    message = "Cool! You chose *{}*!\nThen, please choose one language that you want to *translate to*!".format(lang)
+                    message = "Cool! You chose *{}*!\nThen, please choose one language that you want to translate to!".format(lang)
                     data = actionCtrl.languageSelect(source_lang=lang)
                     actionCtrl._sendWithData(chat_id, message, params=data)
     

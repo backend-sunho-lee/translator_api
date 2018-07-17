@@ -260,7 +260,7 @@ class TelegramBotAction(object):
 
         original_text_id = ret['last_original_text_id']
         if original_text_id is None:
-            message = "Please press 'Translate' button and contribute translation!"
+            message = "Please press *Translate* button and contribute translation!"
             self._sendNormalMessage(chat_id, message)
             return
 
