@@ -359,15 +359,19 @@ def inputTranslation():
             is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'target_contribute', 1, 0)
             is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 0.1)
             is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
-
+            win_point = 1.1
         else:
             is_ok = userObj.getPoint(conn, original_contributor_media, origin_id_external, origin_lang, target_lang, 0.1, text_id=original_contributor_text_id)
             is_ok = userObj.getPoint(conn, contributor_media, contributor_id_external, origin_lang, target_lang, 1, text_id=contributor_text_id)
             is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'target_contribute', 1, 0)
             is_ok = translator.writeActionLog(conn, original_contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 0.1)
             is_ok = translator.writeActionLog(conn, contributor_id, None, origin_lang, target_lang, 'point_issue', 0, 1)
+            win_point = 1
 
         ret_data = translator.viewOneCompleteUnit(conn, target_text_id)
+        ret_data['win_point'] = win_point
+        ret_data['source_lang'] = origin_lang
+        ret_data['target_lang'] = target_lang
 
         if ret_data is not None:
             return make_response(json.jsonify(**ret_data), 200)
