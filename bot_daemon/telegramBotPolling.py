@@ -1,17 +1,11 @@
 # -*- coding: utf-8 -*-
-
-import os
 import pymysql
 from datetime import datetime
-import time, traceback
-
-import requests
+import time
+import traceback
 import json as pyjson
 
-try:
-    from function import TelegramBotAction
-except:
-    from .function import TelegramBotAction
+from .actions import TelegramBotAction
 
 
 conf = {}

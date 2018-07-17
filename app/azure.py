@@ -1,22 +1,6 @@
 # -*- coding: utf-8 -*-
-from flask import g, session, request
 from datetime import datetime, timedelta
 import requests
-
-
-def getApiKeyFromUser(conn, apiKey):
-    cursor = conn.cursor()
-    query = """
-        SELECT user_id, is_internal FROM
-        auth_key
-        WHERE api_key = %s
-    """
-    cursor.execute(query, (apiKey, ))
-    ret = cursor.fetchone()
-    if ret is None or len(ret) < 1:
-        return -1, False
-    else:
-        return ret['user_id'], ret['is_internal']
 
 
 class AzureAuthClient(object):
