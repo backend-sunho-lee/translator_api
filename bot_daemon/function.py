@@ -4,7 +4,7 @@ import json
 
 class TelegramBotAction(object):
     def __init__(self, api_key):
-        self.domain = "http://localhost:5000"
+        self.domain = "http://langChainext-5c6a881e9c24431b.elb.ap-northeast-1.amazonaws.com:5000"
         self.api_key = api_key
 
     def _sendNormalMessage(self, chat_id, message):
