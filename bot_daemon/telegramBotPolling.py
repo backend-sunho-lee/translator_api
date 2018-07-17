@@ -67,7 +67,7 @@ class TrainerBot(object):
 
     
                 #if username is None or username == "":
-                #    message = "Oops! You've not set your Telegram username.\nPlease go to *[menu -> Setting -> Username]*, set your username, and type '/start' again."
+                #    message = "Oops! You've not set your Telegram username.\nPlease go to *[menu → Setting → Username]*, set your username, and type '/start' again."
                 #    actionCtrl._sendNormalMessage(chat_id, message)
                 #    return make_response("OK", 200)
 
@@ -99,7 +99,7 @@ class TrainerBot(object):
                     print("{} | {} | {} | Set language".format(now, id_external, username))
                     actionCtrl.clearLastSourceTextId(id_external, text_id=username)
                     ret = actionCtrl._getId(id_external, text_id=username)
-                    message = "Current setting: *{}* -> *{}*\n\nWhich language do you want to translate from?".format(ret['source_lang'], ret['target_lang'])
+                    message = "*Current setting: {} → {}*\n\nWhich language do you want to translate from?".format(ret['source_lang'], ret['target_lang'])
                     data = actionCtrl.languageSelect()
                     actionCtrl._sendWithData(chat_id, message, params=data)
     
@@ -145,18 +145,20 @@ class TrainerBot(object):
                     ret = actionCtrl._getId(id_external, text_id=username)
     
                     # Welcome message + show general keyboard
-                    message  = "Settings are all done!\nCurrent setting: *{}* -> *{}*\n\nPlease press 'Translate' button below and earn point immediately!\n\n".format(ret['source_lang'], ret['target_lang'])
-                    message += "*1. How to use it?*\n"
-                    message += "Just press 'Translate' button and contribute data!\n\n"
-    
-                    message += "*2. How much point can I earn?*\n"
-                    message += "Source sentence contributor: *0.1 Point*.\n"
-                    message += "Translated sentence contributor: *1 Point*.\n"
-                    message += "If 2 contributors are same user: *1.1 Points*.\n"
-                    message += "If I translated a sentence contributed by anonymous user: *1.1 Points*.\n\n"
-    
-                    message += "*3. When can I use this point?*\n"
-                    message += "Before launching LangChain, we'll take snapshot and give announcement about airdrop!\n"
+                    message  = "Settings are all done!\n*Current setting: {} → {}*\n\n".format(ret['source_lang'], ret['target_lang'])
+                    message += "Please press *Translate* button below and earn point immediately!\n"
+                    message += "Point distribution details will be announced on Langchain page."
+                    # message += "*1. How to use it?*\n"
+                    # message += "Just press 'Translate' button and contribute data!\n\n"
+                    #
+                    # message += "*2. How much point can I earn?*\n"
+                    # message += "Source sentence contributor: *0.1 Point*.\n"
+                    # message += "Translated sentence contributor: *1 Point*.\n"
+                    # message += "If 2 contributors are same user: *1.1 Points*.\n"
+                    # message += "If I translated a sentence contributed by anonymous user: *1.1 Points*.\n\n"
+                    #
+                    # message += "*3. When can I use this point?*\n"
+                    # message += "Before launching LangChain, we'll take snapshot and give announcement about airdrop!\n"
                     keyboard = actionCtrl.normalKeyvoardSetting()
                     actionCtrl._sendWithData(chat_id, message, params=keyboard)
     
