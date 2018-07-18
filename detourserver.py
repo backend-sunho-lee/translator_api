@@ -113,12 +113,13 @@ def translateInternal():
     target_lang = request.form['target_lang']
     tags = request.form.get('tag', "")
     order_user = request.form.get("order_user")
+    id_external = request.form.get("id_external", None)
     media = request.form.get("media")
     where_contributed = request.form.get("where_contributed")
     memo = request.form.get('memo', "")
 
     # Real work
-    is_ok, result = translator.doWorkWithExternal(conn, source_lang, target_lang, sentence, user_id, where_contributed=where_contributed, order_user=order_user, media=media, tags=tags, memo=memo)
+    is_ok, result = translator.doWorkWithExternal(conn, source_lang, target_lang, sentence, user_id, where_contributed=where_contributed, order_user=order_user, id_external=id_external, media=media, tags=tags, memo=memo)
 
     if is_ok == True:
         return make_response(json.jsonify(**result), 200)

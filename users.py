@@ -18,7 +18,7 @@ class Users(object):
 
         # Will be activated
         query = """SELECT * FROM users u
-                   JOIN (SELECT contributor_id, count(*) as sentence_cnt 
+                   LEFT JOIN (SELECT contributor_id, count(*) as sentence_cnt 
                          FROM langchain.origin_texts GROUP BY contributor_id) t1 ON t1.contributor_id = u.id
                    WHERE media = %s AND id_external = %s"""
 
@@ -43,7 +43,6 @@ class Users(object):
         #"""
         #cursor.execute(query_update, (id_external, media, text_id, ))
         #conn.commit()
-
         return ret
 
     def _setId(self, conn, media, id_external, text_id=None):
