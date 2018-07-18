@@ -187,11 +187,18 @@ class TelegramBotAction(object):
 
     def checkBalance(self, chat_id, id_external, text_id=None):
         ret = self._getId(id_external, chat_id=chat_id, text_id=text_id)
-        balances = ret['point']
 
-        message = "Here is your points!\nThanks for your contribution!\n\n"
+        balances = ret['point']
+        total_point = 0
+        for p in ret['point']:
+            total_point += p['point']
+
+        message = "You have *{}* points!\nThanks for your contribution!\n\n".format(total_point)
+        # message = "Here is your points!\nThanks for your contribution!\n\n"
+        # message += "Total: *{}* points.\n\n".format(total_point)
+
         for item in balances:
-            message += "{} → {}: *{}* Points\n".format(item['source_lang'], item['target_lang'], item['point'])
+            message += "{} → {}: *{}* points\n".format(item['source_lang'], item['target_lang'], item['point'])
         self._sendNormalMessage(chat_id, message)
 
     def getSentence(self, chat_id, id_external, text_id=None):
