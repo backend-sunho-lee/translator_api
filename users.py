@@ -43,7 +43,6 @@ class Users(object):
         #"""
         #cursor.execute(query_update, (id_external, media, text_id, ))
         #conn.commit()
-
         return ret
 
     def _setId(self, conn, media, id_external, text_id=None):

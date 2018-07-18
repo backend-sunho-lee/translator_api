@@ -427,7 +427,7 @@ class Translator(object):
         cursor.execute(query, ( target_text_id, ))
         return cursor.fetchone()
 
-    def doWorkWithExternal(self, conn, source_lang, target_lang, sentences, user_id, where_contributed=None, order_user=None, media=None, memo="", tags=""):
+    def doWorkWithExternal(self, conn, source_lang, target_lang, sentences, user_id, where_contributed=None, order_user=None, id_external=None, media=None, memo="", tags=""):
         
         #is_ok, result = self.doWork(source_lang_id, target_lang_id, sentences)
 
@@ -445,7 +445,7 @@ class Translator(object):
         #   4. API call cnt
         
         userCtrl = UserCtrl()
-        ret = userCtrl._getId(conn, media, order_user)
+        ret = userCtrl._getId(conn, media, id_external, order_user)
 
         order_user_id = 0
         if ret is None or len(ret) < 1:
