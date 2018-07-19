@@ -272,12 +272,11 @@ class TelegramBotAction(object):
 
         ret = self._getId(id_external, chat_id=chat_id, text_id=text_id)
 
+        original_text_id = ret.get('last_original_text_id')
         if original_text_id is None:
             message = "Please press ✏️Translate button and contribute translation!"
             self._sendNormalMessage(chat_id, message)
             return
-
-        original_text_id = ret.get('last_original_text_id')
 
         payload = {
               "original_text_id": original_text_id
