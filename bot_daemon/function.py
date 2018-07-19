@@ -190,7 +190,7 @@ class TelegramBotAction(object):
         for p in ret['point']:
             total_point += p['point']
 
-        message = "You have *{}* points!\nThanks for your contribution!\n\n".format(total_point)
+        message = "You have *{}* points!\nThanks for your contribution!\n\n".format(round(total_point, 2))
         # message = "Here is your points!\nThanks for your contribution!\n\n"
         # message += "Total: *{}* points.\n\n".format(total_point)
 
