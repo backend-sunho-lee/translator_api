@@ -91,7 +91,7 @@ class TelegramBotAction(object):
 
     def newUser(self, chat_id, id_external, text_id=None):
         ret = self._getId(id_external, chat_id=chat_id, text_id=text_id)
-        message_success = "Thanks to be a trainer of our LangChain translator!\nYou may start to do it after setting your language!"
+        message_success = "🙌Thanks to be a trainer of LangChain translation bot\n⚙Set your Language first."
         self._sendNormalMessage(chat_id, message_success)
 
     def setSourceLanguage(self, chat_id, id_external, lang, user_id=None):
@@ -177,9 +177,7 @@ class TelegramBotAction(object):
 
     def normalKeyvoardSetting(self):
         return {"reply_markup": {
-                    "keyboard": [
-                       ["Balance", "Translate", "Set Language"]
-                                ],
+                    "keyboard": [["💰My point", "✏️Translate", "⚙Set Language"]],
                     "resize_keyboard": True,
                     "one_time_keyboard": False
                   }
@@ -207,12 +205,12 @@ class TelegramBotAction(object):
         target_lang = ret.get('target_lang')
 
         if None in [source_lang, target_lang]:
-            message = "❗️ Please 'Set Language' first."
+            message = "❗️ Please ⚙Set Language first."
             keyboard = self.normalKeyvoardSetting()
             self._sendWithData(chat_id, message, params=keyboard)
             return
         elif source_lang == target_lang:
-            message = "❗️ Setting Error. Please 'Set Language' again."
+            message = "❗️ Setting Error. Please ⚙Set Language again."
             keyboard = self.normalKeyvoardSetting()
             self._sendWithData(chat_id, message, params=keyboard)
             return
@@ -233,13 +231,13 @@ class TelegramBotAction(object):
 
         ret = resp.json()
         if ret['text'] is not None:
-            message = "Please translate this sentence into *{}*:\n\n".format(target_lang)
+            message = "Please *translate* this sentence into *{}*:\n\n".format(target_lang)
 
             message += "*{}*\n\n".format(ret['text'])
-            message += "- Source media: {}\n".format(ret['where_contributed'])
-            message += "- Tags: {}".format(ret.get('tag'))
+            # message += "- Source media: {}\n".format(ret['where_contributed'])
+            # message += "- Tags: {}".format(ret.get('tag'))
 
-            message += "\n\nThe point is recalled when abusing is detected.\nIf you want to skip this sentence, click translate button again."
+            message += "The point is recalled when abusing is detected.\nIf you want to _skip_ this sentence, click ✏️Translate button again."
 
         else:
             message = "Oops! There is no source sentence that matching language.\nPlease call @langchainbot for translation, then source sentence will be gathered!".format(target_lang)
@@ -267,7 +265,7 @@ class TelegramBotAction(object):
 
         original_text_id = ret['last_original_text_id']
         if original_text_id is None:
-            message = "Please press *Translate* button and contribute translation!"
+            message = "Please press ✏️Translate button and contribute translation!"
             self._sendNormalMessage(chat_id, message)
             return
 
