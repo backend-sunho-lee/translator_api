@@ -4,7 +4,7 @@ import json
 
 class TelegramBotAction(object):
     def __init__(self, api_key):
-        self.domain = "http://localhost:5000"
+        self.domain = "http://langChainext-5c6a881e9c24431b.elb.ap-northeast-1.amazonaws.com:5000"
         self.api_key = api_key
 
     def _sendNormalMessage(self, chat_id, message):
@@ -91,7 +91,7 @@ class TelegramBotAction(object):
 
     def newUser(self, chat_id, id_external, text_id=None):
         ret = self._getId(id_external, chat_id=chat_id, text_id=text_id)
-        message_success = "Thanks to be a trainer of our LangChain translator!\nYou may start to do it after setting your language!"
+        message_success = "🙌Thanks to be a trainer of LangChain translation bot\n⚙Set your Language first."
         self._sendNormalMessage(chat_id, message_success)
 
     def setSourceLanguage(self, chat_id, id_external, lang, user_id=None):
@@ -177,9 +177,7 @@ class TelegramBotAction(object):
 
     def normalKeyvoardSetting(self):
         return {"reply_markup": {
-                    "keyboard": [
-                       ["Balance", "Translate", "Set Language"]
-                                ],
+                    "keyboard": [["💰My point", "✏️Translate", "⚙Set Language"]],
                     "resize_keyboard": True,
                     "one_time_keyboard": False
                   }
@@ -187,11 +185,18 @@ class TelegramBotAction(object):
 
     def checkBalance(self, chat_id, id_external, text_id=None):
         ret = self._getId(id_external, chat_id=chat_id, text_id=text_id)
-        balances = ret['point']
 
-        message = "Here is your points!\nThanks for your contribution!\n\n"
+        balances = ret['point']
+        total_point = 0
+        for p in ret['point']:
+            total_point += p['point']
+
+        message = "You have *{}* points!\nThanks for your contribution!\n\n".format(total_point)
+        # message = "Here is your points!\nThanks for your contribution!\n\n"
+        # message += "Total: *{}* points.\n\n".format(total_point)
+
         for item in balances:
-            message += "{} -> {}: *{}* Points\n".format(item['source_lang'], item['target_lang'], item['point'])
+            message += "{} → {}: *{}* points\n".format(item['source_lang'], item['target_lang'], item['point'])
         self._sendNormalMessage(chat_id, message)
 
     def getSentence(self, chat_id, id_external, text_id=None):
@@ -200,12 +205,12 @@ class TelegramBotAction(object):
         target_lang = ret.get('target_lang')
 
         if None in [source_lang, target_lang]:
-            message = "❗️ Please 'Set Language' first."
+            message = "❗️ Please ⚙Set Language first."
             keyboard = self.normalKeyvoardSetting()
             self._sendWithData(chat_id, message, params=keyboard)
             return
         elif source_lang == target_lang:
-            message = "❗️ Setting Error. Please 'Set Language' again."
+            message = "❗️ Setting Error. Please ⚙Set Language again."
             keyboard = self.normalKeyvoardSetting()
             self._sendWithData(chat_id, message, params=keyboard)
             return
@@ -226,11 +231,13 @@ class TelegramBotAction(object):
 
         ret = resp.json()
         if ret['text'] is not None:
-            message = "Please translate this sentence into *{}*:\n\n".format(target_lang)
+            message = "Please *translate* this sentence into *{}*:\n\n".format(target_lang)
 
             message += "*{}*\n\n".format(ret['text'])
-            message += "Source media: {}\n".format(ret['where_contributed'])
-            message += "Tags: {}".format(ret.get('tag'))
+            # message += "- Source media: {}\n".format(ret['where_contributed'])
+            # message += "- Tags: {}".format(ret.get('tag'))
+
+            message += "The point is recalled when abusing is detected.\nIf you want to _skip_ this sentence, click ✏️Translate button again."
 
         else:
             message = "Oops! There is no source sentence that matching language.\nPlease call @langchainbot for translation, then source sentence will be gathered!".format(target_lang)
@@ -258,7 +265,7 @@ class TelegramBotAction(object):
 
         original_text_id = ret['last_original_text_id']
         if original_text_id is None:
-            message = "Please press 'Translate' button and contribute translation!"
+            message = "Please press ✏️Translate button and contribute translation!"
             self._sendNormalMessage(chat_id, message)
             return
 
@@ -275,19 +282,22 @@ class TelegramBotAction(object):
 
         try:
             resp = requests.post("{}/api/v1/inputTranslation".format(self.domain), data=payload, timeout=5)
+            data = resp.json()
+
+            # ret = self._getId(id_external, chat_id=chat_id, text_id=text_id)
+            # point_array = ret['point']
+            # showing_point = 0.0
+            # for item in point_array:
+            #     if item['source_lang'] == ret['source_lang'] \
+            #             and item['target_lang'] == ret['target_lang']:
+            #         showing_point = item['point']
+            #         break
+
+            message = "Thanks for your contribution!\n"
+            message += "You got *{}* point in {} → {} translation.".format(data['win_point'],
+                                                                           data['source_lang'], data['target_lang'])
+            self._sendNormalMessage(chat_id, message)
         except:
             message_fail = "There seems a trouble to execute it. Please try again!"
             self._sendNormalMessage(chat_id, message_fail)
             return
-
-        ret = self._getId(id_external, chat_id=chat_id, text_id=text_id)
-        point_array = ret['point']
-        showing_point = 0.0
-        for item in point_array:
-            if item['source_lang'] == ret['source_lang'] \
-                    and item['target_lang'] == ret['target_lang']:
-                showing_point = item['point']
-                break
-
-        message = "Thanks for your contribution!\nPoint: *{}* in {}->{} translation.".format(showing_point, ret['source_lang'], ret['target_lang'])
-        self._sendNormalMessage(chat_id, message)
