@@ -72,12 +72,12 @@ class TrainerBot(object):
                 #    return make_response("OK", 200)
 
                 if sentence is None:
-                    print("{} | {} | {} | Multimedia Error".format(now, id_external, username))
+                    print("{} | {} | {} | {} | Multimedia Error".format(new_lastUpdate_id, now, id_external, username))
                     message = "Currently we only take text data!\nYour interest and invenstment will be our fuel to develop useful tool such as OCR contributor or text extractor from sound!"
                     actionCtrl._sendNormalMessage(chat_id, message)
     
                 elif sentence == '/start':
-                    print("{} | {} | {} | New user".format(now, id_external, username))
+                    print("{} | {} | {} | {} | New user".format(new_lastUpdate_id, now, id_external, username))
                     actionCtrl.newUser(chat_id, id_external, username)
                     actionCtrl.clearLastSourceTextId(id_external, username)
     
@@ -87,24 +87,24 @@ class TrainerBot(object):
                     actionCtrl._sendWithData(chat_id, message, params=data)
     
                 elif sentence == '💰My point':
-                    print("{} | {} | {} | Balance check".format(now, id_external, username))
+                    print("{} | {} | {} | {} | Balance check".format(new_lastUpdate_id, now, id_external, username))
                     actionCtrl.clearLastSourceTextId(id_external, username)
                     actionCtrl.checkBalance(chat_id, id_external, username)
     
                 elif sentence == '✏️Translate':
-                    print("{} | {} | {} | Get sentence".format(now, id_external, username))
+                    print("{} | {} | {} | {} | Get sentence".format(new_lastUpdate_id, now, id_external, username))
                     actionCtrl.getSentence(chat_id, id_external, text_id=username)
     
                 elif sentence == '⚙Set Language':
-                    print("{} | {} | {} | Set language".format(now, id_external, username))
+                    print("{} | {} | {} | {} | Set language".format(new_lastUpdate_id, now, id_external, username))
                     actionCtrl.clearLastSourceTextId(id_external, text_id=username)
                     ret = actionCtrl._getId(id_external, text_id=username)
-                    message = "*Current setting: {} → {}*\n\nWhich language do you want to translate *from*?".format(ret['source_lang'], ret['target_lang'])
+                    message = "*Current setting: {} → {}*\n\nWhich language do you want to translate *from*?".format(ret.get('source_lang'), ret.get('target_lang'))
                     data = actionCtrl.languageSelect()
                     actionCtrl._sendWithData(chat_id, message, params=data)
     
                 else:
-                    print("{} | {} | {} | Set language".format(now, id_external, username))
+                    print("{} | {} | {} | {} | Set language".format(new_lastUpdate_id, now, id_external, username))
                     ret = actionCtrl._getId(id_external, text_id=username)
                     # Translated sentence will input
                     actionCtrl.inputSentence(chat_id, id_external, sentence, text_id=username, tags="telegram")
@@ -126,11 +126,11 @@ class TrainerBot(object):
                 lang = data_arr[1]
     
                 if seq == '1st':
-                    print("{} | {} | {} | Choose first language".format(now, id_external, username))
+                    print("{} | {} | {} | {} | Choose first language".format(new_lastUpdate_id, now, id_external, username))
                     ret = actionCtrl._getId(id_external, text_id=username)
                     # Store
                     actionCtrl.setSourceLanguage(chat_id, id_external, lang, username)
-                    actionCtrl._answerCallbackQuery(query_id)
+                    #actionCtrl._answerCallbackQuery(query_id)
     
                     # Ask 2nd lang
                     message = "Cool! You chose *{}*!\nThen, please choose one language that you want to translate *to*!".format(lang)
@@ -138,14 +138,14 @@ class TrainerBot(object):
                     actionCtrl._sendWithData(chat_id, message, params=data)
     
                 elif seq == '2nd':
-                    print("{} | {} | {} | Choose second language".format(now, id_external, username))
+                    print("{} | {} | {} | {} | Choose second language".format(new_lastUpdate_id, now, id_external, username))
                     # Store
                     actionCtrl.setTargetLanguage(chat_id, id_external, lang, username)
-                    actionCtrl._answerCallbackQuery(query_id)
+                    #actionCtrl._answerCallbackQuery(query_id)
                     ret = actionCtrl._getId(id_external, text_id=username)
     
                     # Welcome message + show general keyboard
-                    message  = "Settings are all done!\n*Current setting: {} → {}*\n\n".format(ret['source_lang'], ret['target_lang'])
+                    message  = "Settings are all done!\n*Current setting: {} → {}*\n\n".format(ret.get('source_lang'), ret.get('target_lang'))
                     message += "Please press ✏️Translate button below and earn point immediately!\n"
                     message += "Point distribution details will be announced on Langchain page."
                     # message += "*1. How to use it?*\n"
