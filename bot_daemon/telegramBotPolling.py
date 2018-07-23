@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
+
+import os
 import pymysql
 from datetime import datetime
-import time
-import traceback
+import time, traceback
+
+import requests
 import json as pyjson
 
-from .actions import TelegramBotAction
+try:
+    from function import TelegramBotAction
+except:
+    from .function import TelegramBotAction
 
 
 conf = {}
@@ -98,7 +104,7 @@ class TrainerBot(object):
                     actionCtrl._sendWithData(chat_id, message, params=data)
     
                 else:
-                    print("{} | {} | {} | {} | Input sentence".format(new_lastUpdate_id, now, id_external, username))
+                    print("{} | {} | {} | {} | Set language".format(new_lastUpdate_id, now, id_external, username))
                     ret = actionCtrl._getId(id_external, text_id=username)
                     # Translated sentence will input
                     actionCtrl.inputSentence(chat_id, id_external, sentence, text_id=username, tags="telegram")
