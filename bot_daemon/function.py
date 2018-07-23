@@ -15,7 +15,7 @@ class TelegramBotAction(object):
                     , "text": message
                     , "parse_mode": "Markdown"
                   } 
-        for _ in range(5):
+        for _ in range(1):
             try:
                 resp = requests.post(apiEndpoint_send, data=payload, timeout=1)
             except:
@@ -37,7 +37,7 @@ class TelegramBotAction(object):
 
         headers={"Content-Type": "application/json"}
 
-        for _ in range(5):
+        for _ in range(1):
             try:
                 resp = requests.post(apiEndpoint_send, headers=headers,
                                                    data=json.dumps(payload), timeout=1)
@@ -53,7 +53,7 @@ class TelegramBotAction(object):
                     "callback_query_id": query_id
                   }
 
-        for _ in range(5):
+        for _ in range(1):
             try:
                 resp = requests.post(apiEndpoint_send, data=payload, timeout=1)
             except:
@@ -104,7 +104,7 @@ class TelegramBotAction(object):
               , "language": lang
                 }
         try:
-            resp = requests.post("{}/api/v1/setSourceLanguage".format(self.domain), data=payloads, timeout=5)
+            resp = requests.post("{}/api/v1/setSourceLanguage".format(self.domain), data=payloads, timeout=1)
         except:
             message_fail = "There seems a trouble to execute it. Please try again!"
             self._sendNormalMessage(chat_id, message_fail)
@@ -118,7 +118,7 @@ class TelegramBotAction(object):
               , "id_external": id_external
                 }
         try:
-            resp = requests.post("{}/api/v1/setTargetLanguage".format(self.domain), data=payloads, timeout=5)
+            resp = requests.post("{}/api/v1/setTargetLanguage".format(self.domain), data=payloads, timeout=1)
         except:
             message_fail = "There seems a trouble to execute it. Please try again!"
             self._sendNormalMessage(chat_id, message_fail)
