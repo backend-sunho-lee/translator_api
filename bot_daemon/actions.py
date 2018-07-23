@@ -4,7 +4,8 @@ import json
 
 class TelegramBotAction(object):
     def __init__(self, api_key):
-        self.domain = "http://langChainext-5c6a881e9c24431b.elb.ap-northeast-1.amazonaws.com:5000"
+        #self.domain = "http://langChainext-5c6a881e9c24431b.elb.ap-northeast-1.amazonaws.com:5000"
+        self.domain = "http://localhost:5000"
         self.api_key = api_key
 
     def _sendNormalMessage(self, chat_id, message):
@@ -14,9 +15,9 @@ class TelegramBotAction(object):
                     , "text": message
                     , "parse_mode": "Markdown"
                   } 
-        for _ in range(100):
+        for _ in range(5):
             try:
-                resp = requests.post(apiEndpoint_send, data=payload, timeout=5)
+                resp = requests.post(apiEndpoint_send, data=payload, timeout=1)
             except:
                 continue
 
@@ -36,10 +37,10 @@ class TelegramBotAction(object):
 
         headers={"Content-Type": "application/json"}
 
-        for _ in range(100):
+        for _ in range(5):
             try:
                 resp = requests.post(apiEndpoint_send, headers=headers,
-                                                   data=json.dumps(payload), timeout=5)
+                                                   data=json.dumps(payload), timeout=1)
             except:
                 continue
 
@@ -52,9 +53,9 @@ class TelegramBotAction(object):
                     "callback_query_id": query_id
                   }
 
-        for _ in range(100):
+        for _ in range(5):
             try:
-                resp = requests.post(apiEndpoint_send, data=payload, timeout=5)
+                resp = requests.post(apiEndpoint_send, data=payload, timeout=1)
             except:
                 continue
 
@@ -69,13 +70,14 @@ class TelegramBotAction(object):
                 }
         if chat_id != None:
             payloads['chat_id'] = chat_id
-    
+        print(payloads)
+
         try:
-            resp = requests.post("{}/api/v1/getId".format(self.domain), data=payloads, timeout=5)
+            resp = requests.post("{}/api/v1/getId".format(self.domain), data=payloads, timeout=1)
         except:
             message_fail = "There seems a trouble to execute it. Please try again!"
             self._sendNormalMessage(chat_id, message_fail)
-            return
+            return {}
 
         ret = resp.json()
         return ret
@@ -185,13 +187,14 @@ class TelegramBotAction(object):
 
     def checkBalance(self, chat_id, id_external, text_id=None):
         ret = self._getId(id_external, chat_id=chat_id, text_id=text_id)
+        print(ret)
 
         balances = ret['point']
         total_point = 0
         for p in ret['point']:
             total_point += p['point']
 
-        message = "You have *{}* points!\nThanks for your contribution!\n\n".format(total_point)
+        message = "You have *{}* points!\nThanks for your contribution!\n\n".format(round(total_point, 2))
         # message = "Here is your points!\nThanks for your contribution!\n\n"
         # message += "Total: *{}* points.\n\n".format(total_point)
 
@@ -201,6 +204,12 @@ class TelegramBotAction(object):
 
     def getSentence(self, chat_id, id_external, text_id=None):
         ret = self._getId(id_external, chat_id=chat_id, text_id=text_id)
+        if ret is None:
+            message_fail = "There seems a trouble to execute it. Please try again!"
+            keyboard = self.normalKeyvoardSetting()
+            self._sendWithData(chat_id, message_fail, params=keyboard)
+            return
+
         source_lang = ret.get('source_lang')
         target_lang = ret.get('target_lang')
 
@@ -263,7 +272,7 @@ class TelegramBotAction(object):
 
         ret = self._getId(id_external, chat_id=chat_id, text_id=text_id)
 
-        original_text_id = ret['last_original_text_id']
+        original_text_id = ret.get('last_original_text_id')
         if original_text_id is None:
             message = "Please press ✏️Translate button and contribute translation!"
             self._sendNormalMessage(chat_id, message)
