@@ -228,8 +228,6 @@ class Sentences(object):
         """
         cursor.execute(query, (origin_lang, target_lang, ))
         ret = cursor.fetchone()
-        if ret is None or len(ret) < 1:
-            return {}
 
         query_updateId = """
             UPDATE users
