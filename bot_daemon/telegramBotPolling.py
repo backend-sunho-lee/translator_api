@@ -98,7 +98,7 @@ class TrainerBot(object):
                     actionCtrl._sendWithData(chat_id, message, params=data)
     
                 else:
-                    print("{} | {} | {} | {} | Set language".format(new_lastUpdate_id, now, id_external, username))
+                    print("{} | {} | {} | {} | Input sentence".format(new_lastUpdate_id, now, id_external, username))
                     ret = actionCtrl._getId(id_external, text_id=username)
                     # Translated sentence will input
                     actionCtrl.inputSentence(chat_id, id_external, sentence, text_id=username, tags="telegram")
