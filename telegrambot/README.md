@@ -5,13 +5,13 @@
 ### 번역봇
 번역기 돌린 결과를 알려주는 봇
 
-@langchainbot
+[@langchainbot](https://t.me/langchainbot)
 
 
 ### 트레이너봇
 사용자가 번역을 기여하는 봇
 
-@langchainbottrainer
+[@langchainbottrainer](https://t.me/LangChainTrainerbot)
 
 
 
@@ -19,10 +19,10 @@
 ## 구조
 
 ```
-boilerplate
+telegrambot
 ├─ actions.py
-├─ bot_translation.py
-└─ bot_trainer.py
+├─ translationbot.py
+└─ trainerbot.py
 ```
 
 봇의 기본틀을 Class로 만든다. = TelegramBot
@@ -32,7 +32,6 @@ TelegramBot 클래스를 오버라이딩과 오버로딩을 적절히 섞어 각
 
 
 
-## 주의할 스펙
+> 포인트
 
-- python 3.5+
-- async
+우리가 처음으로 비동기를 적용한 부분! 예이!

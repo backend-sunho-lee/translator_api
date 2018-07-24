@@ -1,5 +1,4 @@
-import asyncio
-import requests
+import aiohttp
 import json
 
 class TelegramBot(object):
@@ -10,7 +9,7 @@ class TelegramBot(object):
         #await self.server_url = "http://langChainext-5c6a881e9c24431b.elb.ap-northeast-1.amazonaws.com:5000"
 
     async def __aenter__(self):
-        await asyncio.sleep(1.0)
+        # await asyncio.sleep(1.0)
         return self.name  # __aenter__에서 값을 반환하면 as에 지정한 변수에 들어감
 
     async def __aexit__(self, exc_type, exc_value, traceback):
@@ -18,103 +17,100 @@ class TelegramBot(object):
 
     async def crawl_updates(self, last_update_id):
         api_get_updates = 'https://api.telegram.org/bot{}/getUpdates'.format(self.token)
-        data = {'offset': last_update_id}
-        resp = requests.post(api_get_updates, data=data)
-        res = resp.json()
-        msglist = res.get('result', [])
-        return msglist
+        payloads = {'offset': last_update_id}
+        async with aiohttp.ClientSession() as session:
+            async with session.post(api_get_updates, data=payloads) as resp:
+                res = await resp.json()
+                msglist = res.get('result', [])
+                return msglist
 
     async def _sendNormalMessage(self, chat_id, message):
         apiEndpoint_send = "https://api.telegram.org/bot{}/sendMessage".format(self.token)
-        payload = {
+        payloads = {
             "chat_id": chat_id
             , "text": message
             , "parse_mode": "Markdown"
         }
-        requests.post(apiEndpoint_send, data=payload, timeout=1)
+        async with aiohttp.ClientSession() as session:
+            async with session.post(apiEndpoint_send, data=payloads) as resp:
+                return
 
     async def _sendWithData(self, chat_id, message, params=None):
         apiEndpoint_send = "https://api.telegram.org/bot{}/sendMessage".format(self.token)
-        payload = {
+        headers = {"Content-Type": "application/json"}
+        payloads = {
             "chat_id": chat_id
             , "text": message
             , "parse_mode": "Markdown"
         }
-
         for key, value in params.items():
-            payload[key] = value
+            payloads[key] = value
 
-        headers = {"Content-Type": "application/json"}
-        requests.post(apiEndpoint_send, headers=headers, data=json.dumps(payload), timeout=1)
+        async with aiohttp.ClientSession(headers=headers) as session:
+            async with session.post(apiEndpoint_send, data=json.dumps(payloads)) as resp:
+                return
 
     async def _answerCallbackQuery(self, query_id):
         apiEndpoint_send = "https://api.telegram.org/bot{}/answerCallbackQuery".format(self.token)
-        payload = {
+        payloads = {
             "callback_query_id": query_id
         }
-        requests.post(apiEndpoint_send, data=payload, timeout=1)
+        async with aiohttp.ClientSession() as session:
+            async with session.post(apiEndpoint_send, data=json.dumps(payloads)) as resp:
+                return
 
     async def _getId(self, id_external, chat_id=None, text_id=None):
+        api_get_id = "{}/api/v1/getId".format(self.server_url)
         payloads = {
-            "media": "telegram"
-            , "text_id": text_id
-            , "id_external": id_external
+            "media": "telegram",
+            "text_id": text_id,
+            "id_external": id_external
         }
         if chat_id != None:
             payloads['chat_id'] = chat_id
-        print(payloads)
 
-        try:
-            resp = requests.post("{}/api/v1/getId".format(self.server_url), data=payloads, timeout=1)
-        except:
-            message_fail = "There seems a trouble to execute it. Please try again!"
-            await self._sendNormalMessage(chat_id, message_fail)
-            return {}
-
-        ret = resp.json()
-        return ret
-
-    async def crawlUpdate(self, offset):
-        apiEndpoint_update = "https://api.telegram.org/bot{}/getUpdates".format(self.token)
-
-        payload = {"offset": offset}
-        resp = requests.post(apiEndpoint_update, data=payload)
-        data = resp.json()
-        ret = data.get('result', [])
-        return ret
+        async with aiohttp.ClientSession() as session:
+            async with session.post(api_get_id, data=payloads) as resp:
+                ret = await resp.json()
+                print(ret)
+                return ret
 
     async def newUser(self, chat_id, id_external, text_id=None):
-        ret = await self._getId(id_external, chat_id=chat_id, text_id=text_id)
+        await self._getId(id_external, chat_id=chat_id, text_id=text_id)
         message_success = "🙌Thanks to be a trainer of LangChain translation bot\n⚙Set your Language first."
         await self._sendNormalMessage(chat_id, message_success)
 
     async def setSourceLanguage(self, chat_id, id_external, lang, user_id=None):
+        api_set_source_language = "{}/api/v1/setSourceLanguage".format(self.server_url)
         payloads = {
             "media": "telegram"
             , "text_id": user_id
             , "id_external": id_external
             , "language": lang
         }
-        try:
-            resp = requests.post("{}/api/v1/setSourceLanguage".format(self.server_url), data=payloads, timeout=1)
-        except:
-            message_fail = "There seems a trouble to execute it. Please try again!"
-            await self._sendNormalMessage(chat_id, message_fail)
-            return
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(api_set_source_language, data=payloads) as resp:
+                if resp.status != 200:
+                    message_fail = "There seems a trouble to execute it. Please try again!"
+                    await self._sendNormalMessage(chat_id, message_fail)
+                return
 
     async def setTargetLanguage(self, chat_id, id_external, lang, user_id=None):
+        api_set_target_language = "{}/api/v1/setTargetLanguage".format(self.server_url)
         payloads = {
             "media": "telegram"
             , "text_id": user_id
             , "language": lang
             , "id_external": id_external
         }
-        try:
-            resp = requests.post("{}/api/v1/setTargetLanguage".format(self.server_url), data=payloads, timeout=1)
-        except:
-            message_fail = "There seems a trouble to execute it. Please try again!"
-            await self._sendNormalMessage(chat_id, message_fail)
-            return
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(api_set_target_language, data=payloads) as resp:
+                if resp.status != 200:
+                    message_fail = "There seems a trouble to execute it. Please try again!"
+                    await self._sendNormalMessage(chat_id, message_fail)
+                return
 
     async def languageSelect(self, source_lang=None):
         lang_list = [
@@ -170,16 +166,18 @@ class TelegramBot(object):
         }
 
     async def normalKeyvoardSetting(self):
-        return {"reply_markup": {
-            "keyboard": [["💰My point", "✏️Translate", "⚙Set Language"]],
-            "resize_keyboard": True,
-            "one_time_keyboard": False
-        }
+        return {
+            "reply_markup": {
+                "keyboard": [
+                    ["💰My point", "✏️Translate", "⚙Set Language"]
+                ],
+                "resize_keyboard": True,
+                "one_time_keyboard": False
+            }
         }
 
     async def checkBalance(self, chat_id, id_external, text_id=None):
         ret = await self._getId(id_external, chat_id=chat_id, text_id=text_id)
-        print(ret)
 
         balances = ret['point']
         total_point = 0
@@ -187,9 +185,6 @@ class TelegramBot(object):
             total_point += p['point']
 
         message = "You have *{}* points!\nThanks for your contribution!\n\n".format(round(total_point, 2))
-        # message = "Here is your points!\nThanks for your contribution!\n\n"
-        # message += "Total: *{}* points.\n\n".format(total_point)
-
         for item in balances:
             message += "{} → {}: *{}* points\n".format(item['source_lang'], item['target_lang'], item['point'])
         await self._sendNormalMessage(chat_id, message)
@@ -216,6 +211,7 @@ class TelegramBot(object):
             await self._sendWithData(chat_id, message, params=keyboard)
             return
 
+        api_get_sentence = "{}/api/v1/getSentence".format(self.server_url)
         payloads = {
             "languages": source_lang
             , "target_lang": target_lang
@@ -223,29 +219,27 @@ class TelegramBot(object):
             , "text_id": text_id
             , "id_external": id_external
         }
-        try:
-            resp = requests.get("{}/api/v1/getSentence".format(self.server_url), params=payloads, timeout=5)
-        except:
-            message_fail = "There seems a trouble to execute it. Please try again!"
-            await self._sendNormalMessage(chat_id, message_fail)
-            return
+        async with aiohttp.ClientSession() as session:
+            async with session.get(api_get_sentence, params=payloads) as resp:
+                if resp.status != 200:
+                    message_fail = "There seems a trouble to execute it. Please try again!"
+                    await self._sendNormalMessage(chat_id, message_fail)
+                    return
+                ret = await resp.json()
+                print(ret)
 
-        ret = resp.json()
-        if ret['text'] is not None:
-            message = "Please *translate* this sentence into *{}*:\n\n".format(target_lang)
+                if ret['text'] is not None:
+                    message = "Please *translate* this sentence into *{}*:\n\n".format(target_lang)
+                    message += "*{}*\n\n".format(ret['text'])
+                    # message += "- Source media: {}\n".format(ret['where_contributed'])
+                    # message += "- Tags: {}".format(ret.get('tag'))
+                    message += "The point is recalled when abusing is detected.\nIf you want to _skip_ this sentence, click ✏️Translate button again."
+                else:
+                    message = "Oops! There is no source sentence that matching language."
+                    message += "Please call @langchainbot for translation, then source sentence will be gathered!".format(target_lang)
 
-            message += "*{}*\n\n".format(ret['text'])
-            # message += "- Source media: {}\n".format(ret['where_contributed'])
-            # message += "- Tags: {}".format(ret.get('tag'))
-
-            message += "The point is recalled when abusing is detected.\nIf you want to _skip_ this sentence, click ✏️Translate button again."
-
-        else:
-            message = "Oops! There is no source sentence that matching language.\nPlease call @langchainbot for translation, then source sentence will be gathered!".format(
-                target_lang)
-
-        keyboard = await self.normalKeyvoardSetting()
-        await self._sendWithData(chat_id, message, params=keyboard)
+                keyboard = await self.normalKeyvoardSetting()
+                await self._sendWithData(chat_id, message, params=keyboard)
 
     async def clearLastSourceTextId(self, id_external, text_id=None):
         payloads = {
@@ -253,10 +247,10 @@ class TelegramBot(object):
             , "text_id": text_id
             , "id_external": id_external
         }
-        try:
-            resp = requests.post("{}/api/v1/clearLastSentence".format(self.server_url), data=payloads, timeout=5)
-        except:
-            return
+        api_clear_last_sentence = "{}/api/v1/clearLastSentence".format(self.server_url)
+        async with aiohttp.ClientSession() as session:
+            async with session.post(api_clear_last_sentence, data=payloads) as resp:
+                return
 
     async def inputSentence(self, chat_id, id_external, target_text, text_id=None, tags=""):
         ret = await self._getId(id_external, chat_id=chat_id, text_id=text_id)
@@ -267,7 +261,7 @@ class TelegramBot(object):
             await self._sendNormalMessage(chat_id, message)
             return
 
-        payload = {
+        payloads = {
             "original_text_id": original_text_id
             , "contributor_media": "telegram"
             , "contributor_text_id": text_id  # Legacy
@@ -277,25 +271,17 @@ class TelegramBot(object):
             , "tags": tags
             , "where_contribute": "telegram"
         }
+        api_input_translation = "{}/api/v1/inputTranslation".format(self.server_url)
+        async with aiohttp.ClientSession() as session:
+            async with session.post(api_input_translation, data=payloads) as resp:
+                if resp.status != 200:
+                    message_fail = "There seems a trouble to execute it. Please try again!"
+                    await self._sendNormalMessage(chat_id, message_fail)
+                    return
 
-        try:
-            resp = requests.post("{}/api/v1/inputTranslation".format(self.server_url), data=payload, timeout=5)
-            data = resp.json()
-
-            # ret = await self._getId(id_external, chat_id=chat_id, text_id=text_id)
-            # point_array = ret['point']
-            # showing_point = 0.0
-            # for item in point_array:
-            #     if item['source_lang'] == ret['source_lang'] \
-            #             and item['target_lang'] == ret['target_lang']:
-            #         showing_point = item['point']
-            #         break
-
-            message = "Thanks for your contribution!\n"
-            message += "You got *{}* point in {} → {} translation.".format(data['win_point'],
-                                                                           data['source_lang'], data['target_lang'])
-            await self._sendNormalMessage(chat_id, message)
-        except:
-            message_fail = "There seems a trouble to execute it. Please try again!"
-            await self._sendNormalMessage(chat_id, message_fail)
-            return
+                data = await resp.json()
+                message = "Thanks for your contribution!\n"
+                message += "You got *{}* point in {} → {} translation.".format(data['win_point'],
+                                                                               data['source_lang'], data['target_lang'])
+                await self._sendNormalMessage(chat_id, message)
+                return

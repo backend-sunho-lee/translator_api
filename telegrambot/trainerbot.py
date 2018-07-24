@@ -12,7 +12,6 @@ with open('../config.json', 'r') as f:
     config = json.load(f)
 TOKEN = config['telegram']['trainer']
 
-
 def read_last_update_id():
     with open('trainer_update_id.txt', 'r') as f:
         last_update_id = f.read()
@@ -113,11 +112,9 @@ class TrainerBot(TelegramBot):
                 ret = await self._getId(id_external, text_id=username)
                 # Store
                 await self.setSourceLanguage(chat_id, id_external, lang, username)
-                # await self._answerCallbackQuery(query_id)
 
                 # Ask 2nd lang
-                message = "Cool! You chose *{}*!\nThen, please choose one language that you want to translate *to*!".format(
-                    lang)
+                message = "Cool! You chose *{}*!\nThen, please choose one language that you want to translate *to*!".format(lang)
                 data = await self.languageSelect(source_lang=lang)
                 await self._sendWithData(chat_id, message, params=data)
 
@@ -152,7 +149,6 @@ class TrainerBot(TelegramBot):
 
 async def main():
     async with TrainerBot('trainer', TOKEN) as new_update_id:  # async with에 클래스의 인스턴스 지정
-        print(new_update_id)
         write_last_update_id(new_update_id)
 
 while True:
@@ -164,5 +160,3 @@ while True:
 
     end = time.time()
     print('실행 시간: {0:.3f}초'.format(end - begin))
-
-    time.sleep(0.5)
