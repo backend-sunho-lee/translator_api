@@ -171,7 +171,10 @@ if __name__ == "__main__":
     trainerBot = TrainerBot()
     while True:
         try:
+            begin = time.time()
             trainerBot.main()
+            end = time.time()
+            print('실행 시간: {0:.3f}초'.format(end - begin))
         except:
             traceback.print_exc()
 
