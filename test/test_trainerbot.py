@@ -12,6 +12,7 @@ from telegrambot.trainerbot import main as trainer
 with open('../config.json', 'r') as f:
     config = json.load(f)
 TOKEN = config['telegram']['test']
+SERVER = 'http://langChainext-5c6a881e9c24431b.elb.ap-northeast-1.amazonaws.com:5000'
 
 def CoroMock():
     coro = Mock(name="CoroutineResult")
@@ -285,6 +286,7 @@ def CoroMocGetUpdates():
 
 class TrainerTestCase(unittest.TestCase):
     @patch('telegrambot.trainerbot.TOKEN', return_value=TOKEN)
+    @patch('telegrambot.trainerbot.server_url', return_value=SERVER)
     @patch('telegrambot.trainerbot.TrainerBot.write_last_update_id', new_callable=CoroMock)
     @patch('telegrambot.trainerbot.TrainerBot.read_last_update_id', new_callable=CoroMockReadUpdateId)
     @patch('telegrambot.trainerbot.TrainerBot.get_updates', new_callable=CoroMocGetUpdates)

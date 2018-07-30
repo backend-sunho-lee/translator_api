@@ -5,7 +5,7 @@ class TelegramBot(object):
     def __init__(self, token):
         self.token = token
         self.server_url = "http://localhost:5000"
-        #await self.server_url = "http://langChainext-5c6a881e9c24431b.elb.ap-northeast-1.amazonaws.com:5000"
+        # self.server_url = "http://langChainext-5c6a881e9c24431b.elb.ap-northeast-1.amazonaws.com:5000"
 
     async def __aenter__(self):
         # await asyncio.sleep(1.0)

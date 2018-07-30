@@ -12,6 +12,7 @@ from telegrambot.translationbot import main as translation
 with open('../config.json', 'r') as f:
     config = json.load(f)
 TOKEN = config['telegram']['test']
+SERVER = 'http://langChainext-5c6a881e9c24431b.elb.ap-northeast-1.amazonaws.com:5000'
 
 def CoroMock():
     coro = Mock(name="CoroutineResult")
@@ -189,6 +190,7 @@ def CoroMocGetUpdates():
 
 class TrainerTestCase(unittest.TestCase):
     @patch('telegrambot.translationbot.TOKEN', return_value=TOKEN)
+    @patch('telegrambot.translationbot.server_url', return_value=SERVER)
     @patch('telegrambot.translationbot.TranslationBot.write_last_update_id', new_callable=CoroMock)
     @patch('telegrambot.translationbot.TranslationBot.read_last_update_id', new_callable=CoroMockReadUpdateId)
     @patch('telegrambot.translationbot.TranslationBot.get_updates', new_callable=CoroMocGetUpdates)
