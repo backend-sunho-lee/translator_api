@@ -104,7 +104,7 @@ class TrainerBot(object):
                     actionCtrl._sendWithData(chat_id, message, params=data)
     
                 else:
-                    print("{} | {} | {} | {} | Set language".format(new_lastUpdate_id, now, id_external, username))
+                    print("{} | {} | {} | {} | Input sentence".format(new_lastUpdate_id, now, id_external, username))
                     ret = actionCtrl._getId(id_external, text_id=username)
                     # Translated sentence will input
                     actionCtrl.inputSentence(chat_id, id_external, sentence, text_id=username, tags="telegram")
@@ -171,7 +171,10 @@ if __name__ == "__main__":
     trainerBot = TrainerBot()
     while True:
         try:
+            begin = time.time()
             trainerBot.main()
+            end = time.time()
+            print('실행 시간: {0:.3f}초'.format(end - begin))
         except:
             traceback.print_exc()
 

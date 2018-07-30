@@ -228,6 +228,8 @@ class Sentences(object):
         """
         cursor.execute(query, (origin_lang, target_lang, ))
         ret = cursor.fetchone()
+        if ret is None or len(ret) < 1:
+            return {}
 
         query_updateId = """
             UPDATE users
@@ -255,7 +257,7 @@ class Sentences(object):
 
         ret = self._getOriginSentenceInfo(conn, original_text_id)
         if ret is None or len(ret) < 1:
-            return False, None, None, None, None, None
+            return False, None, None, None, None, None, None, None, None, None
 
         original_contributor_id = ret['contributor_id']
         original_contributor_media = ret['contributor_media']
