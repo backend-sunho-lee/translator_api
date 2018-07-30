@@ -286,7 +286,7 @@ def CoroMocGetUpdates():
 
 class TrainerTestCase(unittest.TestCase):
     @patch('telegrambot.trainerbot.TOKEN', return_value=TOKEN)
-    @patch('telegrambot.trainerbot.server_url', return_value=SERVER)
+    @patch('telegrambot.trainerbot.TrainerBot.server_url', return_value=SERVER)
     @patch('telegrambot.trainerbot.TrainerBot.write_last_update_id', new_callable=CoroMock)
     @patch('telegrambot.trainerbot.TrainerBot.read_last_update_id', new_callable=CoroMockReadUpdateId)
     @patch('telegrambot.trainerbot.TrainerBot.get_updates', new_callable=CoroMocGetUpdates)
@@ -304,3 +304,5 @@ class TrainerTestCase(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+    from telegrambot.translationbot import TelegramBot
+
