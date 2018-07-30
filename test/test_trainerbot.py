@@ -6,13 +6,11 @@ from asyncio import coroutine
 import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
-# from trainerbot import main as trainer
 from telegrambot.trainerbot import main as trainer
 
 with open('../config.json', 'r') as f:
     config = json.load(f)
 TOKEN = config['telegram']['test']
-SERVER = 'http://langChainext-5c6a881e9c24431b.elb.ap-northeast-1.amazonaws.com:5000'
 
 def CoroMock():
     coro = Mock(name="CoroutineResult")
@@ -25,7 +23,7 @@ def CoroMockReadUpdateId():
     coro = Mock(name="CoroutineResult")
     corofunc = Mock(name="CoroutineFunction", side_effect=coroutine(coro))
     corofunc.coro = coro
-    corofunc.coro.return_value = 201807271342
+    corofunc.coro.return_value = 20180727
     return corofunc
 
 def CoroMocGetUpdates():
@@ -286,7 +284,6 @@ def CoroMocGetUpdates():
 
 class TrainerTestCase(unittest.TestCase):
     @patch('telegrambot.trainerbot.TOKEN', return_value=TOKEN)
-    @patch('telegrambot.trainerbot.TrainerBot.server_url', return_value=SERVER)
     @patch('telegrambot.trainerbot.TrainerBot.write_last_update_id', new_callable=CoroMock)
     @patch('telegrambot.trainerbot.TrainerBot.read_last_update_id', new_callable=CoroMockReadUpdateId)
     @patch('telegrambot.trainerbot.TrainerBot.get_updates', new_callable=CoroMocGetUpdates)
@@ -300,9 +297,7 @@ class TrainerTestCase(unittest.TestCase):
         loop = asyncio.get_event_loop()
         ret = loop.run_until_complete(trainer())
         # self.assertTrue(ret)
-        self.assertEqual(ret, 201807271342)
+        self.assertEqual(ret, 524784331000)
 
 if __name__ == '__main__':
     unittest.main()
-    from telegrambot.translationbot import TelegramBot
-

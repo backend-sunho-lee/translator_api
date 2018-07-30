@@ -25,7 +25,7 @@ def CoroMockReadUpdateId():
     coro = Mock(name="GetUpdateIdResult")
     corofunc = Mock(name="GetUpdateIdFunction", side_effect=coroutine(coro))
     corofunc.coro = coro
-    corofunc.coro.return_value = 201807271342
+    corofunc.coro.return_value = 20180727
     return corofunc
 
 def CoroMockSendReplyMessage():
@@ -190,7 +190,6 @@ def CoroMocGetUpdates():
 
 class TrainerTestCase(unittest.TestCase):
     @patch('telegrambot.translationbot.TOKEN', return_value=TOKEN)
-    @patch('telegrambot.translationbot.TranslationBot.server_url', return_value=SERVER)
     @patch('telegrambot.translationbot.TranslationBot.write_last_update_id', new_callable=CoroMock)
     @patch('telegrambot.translationbot.TranslationBot.read_last_update_id', new_callable=CoroMockReadUpdateId)
     @patch('telegrambot.translationbot.TranslationBot.get_updates', new_callable=CoroMocGetUpdates)
@@ -204,7 +203,7 @@ class TrainerTestCase(unittest.TestCase):
         loop = asyncio.get_event_loop()
         ret = loop.run_until_complete(translation())
         # self.assertTrue(ret)
-        self.assertEqual(ret, 201807271342)
+        self.assertEqual(ret, 524784350)
 
 if __name__ == '__main__':
     unittest.main()
