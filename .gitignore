@@ -5,3 +5,4 @@ cert
 *.txt
 .idea/
 .pytest_cache/
+*.enc
