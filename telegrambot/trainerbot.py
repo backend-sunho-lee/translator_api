@@ -5,8 +5,8 @@ from datetime import datetime
 import os
 cwd = os.getcwd()
 cwd = cwd.split('/')
-if cwd[-1] != '_translator_api':
-    cwd[-1] = '_translator_api'
+if cwd[-1] != 'translator_api':
+    cwd[-1] = 'translator_api'
     cwd = '/'.join(cwd)
     os.chdir(cwd)
 else:
