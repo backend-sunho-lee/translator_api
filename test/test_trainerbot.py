@@ -9,7 +9,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 # from trainerbot import main as trainer
 from telegrambot.trainerbot import main as trainer
 
-with open('config.json', 'r') as f:
+with open('../config.json', 'r') as f:
     config = json.load(f)
 TOKEN = config['telegram']['test']
 
