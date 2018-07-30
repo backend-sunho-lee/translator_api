@@ -12,3 +12,5 @@ install:
 
 script: pytest test
 sudo: enabled
+services:
+- redis-server
