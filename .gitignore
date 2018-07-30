@@ -4,3 +4,4 @@ cert
 *.swp
 *.txt
 .idea/
+.pytest_cache/

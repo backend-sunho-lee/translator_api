@@ -2,13 +2,22 @@ import asyncio
 import aiohttp
 import json
 from datetime import datetime
+import os
+cwd = os.getcwd()
+cwd = cwd.split('/')
+if cwd[-1] != '_translator_api':
+    cwd[-1] = '_translator_api'
+    cwd = '/'.join(cwd)
+    os.chdir(cwd)
+else:
+    cwd = '/'.join(cwd)
 
 try:
     from actions import TelegramBot
 except:
     from .actions import TelegramBot
 
-with open('../config.json', 'r') as f:
+with open('{}/config.json'.format(cwd), 'r') as f:
     config = json.load(f)
 TOKEN = config['telegram']['trainer']
 

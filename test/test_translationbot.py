@@ -6,9 +6,10 @@ from asyncio import coroutine
 import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
-from translationbot import main as translation
+# from translationbot import main as translation
+from telegrambot.translationbot import main as translation
 
-with open('../config.json', 'r') as f:
+with open('config.json', 'r') as f:
     config = json.load(f)
 TOKEN = config['telegram']['test']
 
@@ -187,15 +188,15 @@ def CoroMocGetUpdates():
     return corofunc
 
 class TrainerTestCase(unittest.TestCase):
-    @patch('translationbot.TOKEN', return_value=TOKEN)
-    @patch('translationbot.TranslationBot.write_last_update_id', new_callable=CoroMock)
-    @patch('translationbot.TranslationBot.read_last_update_id', new_callable=CoroMockReadUpdateId)
-    @patch('translationbot.TranslationBot.get_updates', new_callable=CoroMocGetUpdates)
-    @patch('translationbot.TranslationBot.send_message', new_callable=CoroMock)
-    @patch('translationbot.TranslationBot.send_message_with_data', new_callable=CoroMock)
-    @patch('translationbot.TranslationBot.send_reply_message', new_callable=CoroMockSendReplyMessage)
-    @patch('translationbot.TranslationBot.edit_message', new_callable=CoroMock)
-    @patch('translationbot.TranslationBot.answer_callback_query', new_callable=CoroMock)
+    @patch('telegrambot.translationbot.TOKEN', return_value=TOKEN)
+    @patch('telegrambot.translationbot.TranslationBot.write_last_update_id', new_callable=CoroMock)
+    @patch('telegrambot.translationbot.TranslationBot.read_last_update_id', new_callable=CoroMockReadUpdateId)
+    @patch('telegrambot.translationbot.TranslationBot.get_updates', new_callable=CoroMocGetUpdates)
+    @patch('telegrambot.translationbot.TranslationBot.send_message', new_callable=CoroMock)
+    @patch('telegrambot.translationbot.TranslationBot.send_message_with_data', new_callable=CoroMock)
+    @patch('telegrambot.translationbot.TranslationBot.send_reply_message', new_callable=CoroMockSendReplyMessage)
+    @patch('telegrambot.translationbot.TranslationBot.edit_message', new_callable=CoroMock)
+    @patch('telegrambot.translationbot.TranslationBot.answer_callback_query', new_callable=CoroMock)
     def test_msg_handling(self, t, w, r, g, s1, s2, s3, e, a):
         actions = ['New user', 'Translate']
         loop = asyncio.get_event_loop()

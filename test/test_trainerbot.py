@@ -6,9 +6,10 @@ from asyncio import coroutine
 import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
-from trainerbot import main as trainer
+# from trainerbot import main as trainer
+from telegrambot.trainerbot import main as trainer
 
-with open('../config.json', 'r') as f:
+with open('config.json', 'r') as f:
     config = json.load(f)
 TOKEN = config['telegram']['test']
 
@@ -283,15 +284,15 @@ def CoroMocGetUpdates():
     return corofunc
 
 class TrainerTestCase(unittest.TestCase):
-    @patch('trainerbot.TOKEN', return_value=TOKEN)
-    @patch('trainerbot.TrainerBot.write_last_update_id', new_callable=CoroMock)
-    @patch('trainerbot.TrainerBot.read_last_update_id', new_callable=CoroMockReadUpdateId)
-    @patch('trainerbot.TrainerBot.get_updates', new_callable=CoroMocGetUpdates)
-    @patch('trainerbot.TrainerBot.send_message', new_callable=CoroMock)
-    @patch('trainerbot.TrainerBot.send_message_with_data', new_callable=CoroMock)
-    @patch('trainerbot.TrainerBot.send_reply_message', new_callable=CoroMock)
-    @patch('trainerbot.TrainerBot.edit_message', new_callable=CoroMock)
-    @patch('trainerbot.TrainerBot.answer_callback_query', new_callable=CoroMock)
+    @patch('telegrambot.trainerbot.TOKEN', return_value=TOKEN)
+    @patch('telegrambot.trainerbot.TrainerBot.write_last_update_id', new_callable=CoroMock)
+    @patch('telegrambot.trainerbot.TrainerBot.read_last_update_id', new_callable=CoroMockReadUpdateId)
+    @patch('telegrambot.trainerbot.TrainerBot.get_updates', new_callable=CoroMocGetUpdates)
+    @patch('telegrambot.trainerbot.TrainerBot.send_message', new_callable=CoroMock)
+    @patch('telegrambot.trainerbot.TrainerBot.send_message_with_data', new_callable=CoroMock)
+    @patch('telegrambot.trainerbot.TrainerBot.send_reply_message', new_callable=CoroMock)
+    @patch('telegrambot.trainerbot.TrainerBot.edit_message', new_callable=CoroMock)
+    @patch('telegrambot.trainerbot.TrainerBot.answer_callback_query', new_callable=CoroMock)
     def test_msg_handling(self, t, w, r, g, s1, s2, s3, e, a):
         actions = ['Multimedia Error', 'New user', 'Balance check', 'Get sentence', 'Set language', 'Input sentence', 'Choose first language', 'Choose second language']
         loop = asyncio.get_event_loop()
