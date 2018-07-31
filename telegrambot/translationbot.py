@@ -19,7 +19,6 @@ except:
 
 with open('../config.json', 'r') as f:
     config = json.load(f)
-TOKEN = config['telegram']['translator']
 CICERON_API_KEY = config['ciceron']['translator']
 
 LANGUAGES = ['ko', 'en', 'zh', 'ja', 'ru', 'in', 'de', 'th', 'fr', 'vi', 'es', 'pt']
@@ -85,7 +84,7 @@ class TranslationBot(TelegramBot):
         headers = {"Authorization": CICERON_API_KEY}
 
         async with aiohttp.ClientSession(headers=headers) as session:
-            api_internal_translate = "{}/api/v2/internal/translate".format(self.server_url)
+            api_internal_translate = "{}/api/v2/internal/translate".format(self.server)
             async with session.post(api_internal_translate, data=payloads, verify_ssl=False) as resp:
                 if resp.status != 200:
                     data = {
@@ -171,12 +170,17 @@ class TranslationBot(TelegramBot):
             await self.edit_message(new_chat_id, new_message_id, message)
         return update_id
 
-async def main():
-    async with TranslationBot(TOKEN) as new_update_id:  # async with에 클래스의 인스턴스 지정
+async def main(token, server):
+    async with TranslationBot(token, server) as new_update_id:  # async with에 클래스의 인스턴스 지정
         return new_update_id
 
 if __name__ == "__main__":
+    with open('../config.json', 'r') as f:
+        config = json.load(f)
+    TOKEN = config['telegram']['translator']
+    SERVER = "http://localhost:5000"
+
     while True:
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(main())
+        loop.run_until_complete(main(TOKEN, SERVER))
         # loop.close()

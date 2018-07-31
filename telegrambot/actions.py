@@ -2,9 +2,10 @@ import aiohttp
 import json
 
 class TelegramBot(object):
-    def __init__(self, token):
+    def __init__(self, token, server):
         self.token = token
-        self.server_url = "http://localhost:5000"
+        self.server = server
+        # self.server = "http://localhost:5000"
         # self.server_url = "http://langChainext-5c6a881e9c24431b.elb.ap-northeast-1.amazonaws.com:5000"
 
     async def __aenter__(self):
@@ -150,7 +151,7 @@ class TelegramBot(object):
         }
 
     async def langchain_get_id(self, id_external, chat_id=None, text_id=None):
-        api_get_id = "{}/api/v1/getId".format(self.server_url)
+        api_get_id = "{}/api/v1/getId".format(self.server)
         payloads = {
             "media": "telegram",
             "text_id": text_id,

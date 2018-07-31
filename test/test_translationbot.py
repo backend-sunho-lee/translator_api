@@ -189,7 +189,6 @@ def CoroMocGetUpdates():
     return corofunc
 
 class TrainerTestCase(unittest.TestCase):
-    @patch('telegrambot.translationbot.TOKEN', return_value=TOKEN)
     @patch('telegrambot.translationbot.TranslationBot.write_last_update_id', new_callable=CoroMock)
     @patch('telegrambot.translationbot.TranslationBot.read_last_update_id', new_callable=CoroMockReadUpdateId)
     @patch('telegrambot.translationbot.TranslationBot.get_updates', new_callable=CoroMocGetUpdates)
@@ -198,10 +197,15 @@ class TrainerTestCase(unittest.TestCase):
     @patch('telegrambot.translationbot.TranslationBot.send_reply_message', new_callable=CoroMockSendReplyMessage)
     @patch('telegrambot.translationbot.TranslationBot.edit_message', new_callable=CoroMock)
     @patch('telegrambot.translationbot.TranslationBot.answer_callback_query', new_callable=CoroMock)
-    def test_msg_handling(self, t, w, r, g, s1, s2, s3, e, a):
+    def test_msg_handling(self, w, r, g, s1, s2, s3, e, a):
+        with open('../config.json', 'r') as f:
+            config = json.load(f)
+        TOKEN = config['telegram']['test']
+        SERVER = "http://langChainext-5c6a881e9c24431b.elb.ap-northeast-1.amazonaws.com:5000"
+
         actions = ['New user', 'Translate']
         loop = asyncio.get_event_loop()
-        ret = loop.run_until_complete(translation())
+        ret = loop.run_until_complete(translation(TOKEN, SERVER))
         # self.assertTrue(ret)
         self.assertEqual(ret, 524784350)
 

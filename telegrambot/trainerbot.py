@@ -15,10 +15,6 @@ try:
 except:
     from .actions import TelegramBot
 
-with open('../config.json', 'r') as f:
-    config = json.load(f)
-TOKEN = config['telegram']['trainer']
-
 class TrainerBot(TelegramBot):
     async def __aenter__(self):
         last_update_id = await self.read_last_update_id()
@@ -87,7 +83,7 @@ class TrainerBot(TelegramBot):
             await self.send_message_with_data(chat_id, message, params=keyboard)
             return
 
-        api_get_sentence = "{}/api/v1/getSentence".format(self.server_url)
+        api_get_sentence = "{}/api/v1/getSentence".format(self.server)
         payloads = {
             "languages": source_lang
             , "target_lang": target_lang
@@ -124,7 +120,7 @@ class TrainerBot(TelegramBot):
             , "text_id": text_id
             , "id_external": id_external
         }
-        api_clear_last_sentence = "{}/api/v1/clearLastSentence".format(self.server_url)
+        api_clear_last_sentence = "{}/api/v1/clearLastSentence".format(self.server)
         async with aiohttp.ClientSession() as session:
             async with session.post(api_clear_last_sentence, data=payloads) as resp:
                 return
@@ -138,7 +134,7 @@ class TrainerBot(TelegramBot):
             await self.send_message(chat_id, message)
             return
 
-        api_input_translation = "{}/api/v1/inputTranslation".format(self.server_url)
+        api_input_translation = "{}/api/v1/inputTranslation".format(self.server)
         payloads = {
             "original_text_id": original_text_id
             , "contributor_media": "telegram"
@@ -164,7 +160,7 @@ class TrainerBot(TelegramBot):
                 return
 
     async def langchain_set_source_lang(self, chat_id, id_external, lang, user_id=None):
-        api_set_source_language = "{}/api/v1/setSourceLanguage".format(self.server_url)
+        api_set_source_language = "{}/api/v1/setSourceLanguage".format(self.server)
         payloads = {
             "media": "telegram"
             , "text_id": user_id
@@ -181,7 +177,7 @@ class TrainerBot(TelegramBot):
                 return
 
     async def langchain_set_target_lang(self, chat_id, id_external, lang, user_id=None):
-        api_set_target_language = "{}/api/v1/setTargetLanguage".format(self.server_url)
+        api_set_target_language = "{}/api/v1/setTargetLanguage".format(self.server)
         payloads = {
             "media": "telegram"
             , "text_id": user_id
@@ -293,12 +289,17 @@ class TrainerBot(TelegramBot):
                 await self.send_message_with_data(chat_id, message, params=keyboard)
         return update_id
 
-async def main():
-    async with TrainerBot(TOKEN) as new_update_id:  # async with에 클래스의 인스턴스 지정
+async def main(token, server):
+    async with TrainerBot(token, server) as new_update_id:  # async with에 클래스의 인스턴스 지정
         return new_update_id
 
 if __name__ == '__main__':
+    with open('../config.json', 'r') as f:
+        config = json.load(f)
+    TOKEN = config['telegram']['trainer']
+    SERVER = "http://localhost:5000"
+
     while True:
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(main())
+        loop.run_until_complete(main(TOKEN, SERVER))
         # loop.close()
